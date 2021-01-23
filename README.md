@@ -54,7 +54,7 @@ source := "my-source-data"
 
 // Encrypt
 cipher := feistel.NewCipher([]byte("some-32-byte-long-key-to-be-safe"), 10)
-obfuscated, err := cipher.Encrypt(source)
+obfuscated, err := cipher.Encrypt([]byte(source))
 
 // Decrypt
 deciphered, err := cipher.Decrypt(obfuscated)
