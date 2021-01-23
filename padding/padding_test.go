@@ -9,11 +9,11 @@ import (
 
 // TestPadding ...
 func TestPadding(t *testing.T) {
-	expected := "edgewhere"
+	expected := "Edgewhere"
 	padded := padding.Apply([]byte(expected))
 	assert.Equal(t, len(padded), len(expected)+1)
 	assert.Assert(t, len(padded)%2 == 0)
-	assert.Equal(t, string(padded), "edgewhere")
+	assert.Equal(t, string(padded), "Edgewhere")
 	found := string(padding.Unapply(padded))
 	assert.Equal(t, expected, found)
 }
