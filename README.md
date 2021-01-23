@@ -40,10 +40,10 @@ go get github.com/cyrildever/feistel
 ```
 
 To get an obfuscated string from a source data, first instantiate a `Cipher` object, passing it a key and a number of rounds.
-Then, use the `encrypt()` method with the source data as argument. The result will be a `Buffer`.
+Then, use the `Encrypt()` method with the source data as argument. The result will be a byte array.
 To ensure maximum security, I recommend you use a 256-bit key or longer and a minimum of 10 rounds.
 
-The decryption process uses the obfuscated buffered data and pass it to the `decrypt()` method of the `Cipher`. 
+The decryption process uses the obfuscated byte array and pass it to the `Decrypt()` method of the `Cipher`.
 
 ```golang
 import (
@@ -53,13 +53,13 @@ import (
 source := "my-source-data"
 
 // Encrypt
-cipher := feistel.NewCipher([]byte("some-32-byte-long-key-to-be-safe"), 10)
-obfuscated, err := cipher.Encrypt([]byte(source))
+cipher := feistel.NewCipher("some-32-byte-long-key-to-be-safe", 10)
+obfuscated, err := cipher.Encrypt(source)
 
 // Decrypt
 deciphered, err := cipher.Decrypt(obfuscated)
 
-assert.DeepEqual(t, string(deciphered), source)
+assert.DeepEqual(t, deciphered, source)
 ```
 
 

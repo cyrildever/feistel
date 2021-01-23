@@ -21,12 +21,12 @@ type Cipher struct {
 //--- METHODS
 
 // Encrypt ...
-func (c Cipher) Encrypt(src []byte) (ciphered []byte, err error) {
+func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
 	if len(src) == 0 {
 		return
 	}
 	// Apply the Feistel cipher
-	data := padding.Apply(src)
+	data := padding.Apply([]byte(src))
 	left, right, err := c.split(string(data))
 	if err != nil {
 		return
@@ -34,12 +34,12 @@ func (c Cipher) Encrypt(src []byte) (ciphered []byte, err error) {
 	parts := []string{left, right}
 	for i := 0; i < c.Rounds; i++ {
 		left = right
-		tmp, e := c.round(parts[1], i)
+		rnd, e := c.round(parts[1], i)
 		if e != nil {
 			err = e
 			return
 		}
-		right, err = xor.String(parts[0], tmp)
+		right, err = xor.String(parts[0], rnd)
 		if err != nil {
 			return
 		}
@@ -47,6 +47,34 @@ func (c Cipher) Encrypt(src []byte) (ciphered []byte, err error) {
 	}
 	ciphered = []byte(parts[0] + parts[1])
 	return
+}
+
+// Decrypt ...
+func (c Cipher) Decrypt(ciphered []byte) (string, error) {
+	if len(ciphered) == 0 {
+		return "", nil
+	}
+	if len(ciphered)%2 != 0 {
+		return "", errors.New("invalid obfuscated data")
+	}
+	// Apply Feistel cipher
+	left, right, err := c.split(string(ciphered))
+	if err != nil {
+		return "", err
+	}
+	for i := 0; i < c.Rounds; i++ {
+		rnd, err := c.round(left, c.Rounds-i-1)
+		if err != nil {
+			return "", err
+		}
+		tmp, err := xor.String(right, rnd)
+		if err != nil {
+			return "", err
+		}
+		right = left
+		left = tmp
+	}
+	return string(padding.Unapply([]byte(left + right))), nil
 }
 
 // Feistel implementation
