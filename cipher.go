@@ -2,7 +2,6 @@ package feistel
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/cyrildever/feistel/common/utils"
 	"github.com/cyrildever/feistel/padding"
@@ -12,7 +11,7 @@ import (
 
 //--- TYPES
 
-// Cipher ...
+// Cipher uses the SHA-256 hashing function to create the keys at each round
 type Cipher struct {
 	Key    string
 	Rounds int
@@ -27,7 +26,7 @@ func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
 	}
 	// Apply the Feistel cipher
 	data := padding.Apply([]byte(src))
-	left, right, err := c.split(string(data))
+	left, right, err := utils.Split(string(data))
 	if err != nil {
 		return
 	}
@@ -58,7 +57,7 @@ func (c Cipher) Decrypt(ciphered []byte) (string, error) {
 		return "", errors.New("invalid obfuscated data")
 	}
 	// Apply Feistel cipher
-	left, right, err := c.split(string(ciphered))
+	left, right, err := utils.Split(string(ciphered))
 	if err != nil {
 		return "", err
 	}
@@ -79,31 +78,9 @@ func (c Cipher) Decrypt(ciphered []byte) (string, error) {
 
 // Feistel implementation
 
-// add adds two strings in the sense that each charCode are added
-func (c Cipher) add(str1, str2 string) (string, error) {
-	if len(str1) != len(str2) {
-		return "", errors.New("to be added, byte arrays must be of the same length")
-	}
-	added := ""
-	for i := 0; i < len(str1); i++ {
-		added += string(str1[i] + str2[i])
-	}
-	return added, nil
-}
-
-// extract returns an extraction of the passed string of the desired length from the passed start index.
-// If the desired length is too long, the key string is repeated.
-func (c Cipher) extract(from string, startIndex, desiredLength int) string {
-	startIndex = startIndex % len(from)
-	lengthNeeded := startIndex + desiredLength
-	repetitions := lengthNeeded/len(from) + 1
-	repeated := strings.Repeat(from, repetitions)
-	return repeated[startIndex : startIndex+desiredLength]
-}
-
 // round is the function applied at each round of the obfuscation process to the right side of the Feistel cipher
 func (c Cipher) round(item string, index int) (string, error) {
-	addition, err := c.add(item, c.extract(c.Key, index, len(item)))
+	addition, err := utils.Add(item, utils.Extract(c.Key, index, len(item)))
 	if err != nil {
 		return "", err
 	}
@@ -112,19 +89,7 @@ func (c Cipher) round(item string, index int) (string, error) {
 		return "", err
 	}
 	hexHashed := utls.ToHex(hashed)
-	return c.extract(hexHashed, index, len(item)), nil
-}
-
-// split splits a byte array in two equal parts
-func (c Cipher) split(item string) (left, right string, err error) {
-	if len(item)%2 != 0 {
-		err = errors.New("invalid string length: cannot be split")
-		return
-	}
-	half := len(item) / 2
-	left = item[:half]
-	right = item[half:]
-	return
+	return utils.Extract(hexHashed, index, len(item)), nil
 }
 
 //--- FUNCTIONS
