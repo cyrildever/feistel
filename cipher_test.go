@@ -27,5 +27,5 @@ func TestDecrypt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, string(found), expected)
+	assert.Equal(t, found, expected)
 }

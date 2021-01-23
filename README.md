@@ -39,7 +39,7 @@ There is no restriction on the ![$F$](https://render.githubusercontent.com/rende
 go get github.com/cyrildever/feistel
 ```
 
-To get an obfuscated string from a source data, first instantiate a `Cipher` object, passing it a key and a number of rounds.
+To get an obfuscated string from a source data using an automatic key generation from SHA-256 hashing function at each round, first instantiate a `Cipher` object, passing it a base key and a number of rounds.
 Then, use the `Encrypt()` method with the source data as argument. The result will be a byte array.
 To ensure maximum security, I recommend you use a 256-bit key or longer and a minimum of 10 rounds.
 
@@ -59,8 +59,20 @@ obfuscated, err := cipher.Encrypt(source)
 // Decrypt
 deciphered, err := cipher.Decrypt(obfuscated)
 
-assert.DeepEqual(t, deciphered, source)
+assert.Equal(t, deciphered, source)
 ```
+_NB: This is the exact replica of my Typescript implementation (see below)._
+
+You may also use your own set of keys through a `CustomCipher` instance, eg.
+```golang
+keys := []string{
+  "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba",
+  "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+}
+cipher = feistel.NewCustomCipher(keys)
+```
+In that case, the number of rounds depends on the number of provided keys.
 
 
 ### Other implementations

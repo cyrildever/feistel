@@ -11,16 +11,16 @@ import (
 
 //--- TYPES
 
-// Cipher uses the SHA-256 hashing function to create the keys at each round
-type Cipher struct {
-	Key    string
-	Rounds int
+// CustomCipher uses custom keys instead of the SHA-256 hashing function to provide a new key at each round.
+// The number of rounds is then determined by the number of keys provided.
+type CustomCipher struct {
+	Keys []string
 }
 
 //--- METHODS
 
 // Encrypt ...
-func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
+func (cc CustomCipher) Encrypt(src string) (ciphered []byte, err error) {
 	if len(src) == 0 {
 		return
 	}
@@ -31,9 +31,9 @@ func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
 		return
 	}
 	parts := []string{left, right}
-	for i := 0; i < c.Rounds; i++ {
+	for i := 0; i < len(cc.Keys); i++ {
 		left = right
-		rnd, e := c.round(parts[1], i)
+		rnd, e := cc.round(parts[1], i)
 		if e != nil {
 			err = e
 			return
@@ -49,7 +49,7 @@ func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
 }
 
 // Decrypt ...
-func (c Cipher) Decrypt(ciphered []byte) (string, error) {
+func (cc CustomCipher) Decrypt(ciphered []byte) (string, error) {
 	if len(ciphered) == 0 {
 		return "", nil
 	}
@@ -61,8 +61,8 @@ func (c Cipher) Decrypt(ciphered []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for i := 0; i < c.Rounds; i++ {
-		rnd, err := c.round(left, c.Rounds-i-1)
+	for i := 0; i < len(cc.Keys); i++ {
+		rnd, err := cc.round(left, len(cc.Keys)-i-1)
 		if err != nil {
 			return "", err
 		}
@@ -79,8 +79,8 @@ func (c Cipher) Decrypt(ciphered []byte) (string, error) {
 // Feistel implementation
 
 // round is the function applied at each round of the obfuscation process to the right side of the Feistel cipher
-func (c Cipher) round(item string, index int) (string, error) {
-	addition, err := utils.Add(item, utils.Extract(c.Key, index, len(item)))
+func (cc CustomCipher) round(item string, index int) (string, error) {
+	addition, err := utils.Add(item, utils.Extract(cc.Keys[index], index, len(item)))
 	if err != nil {
 		return "", err
 	}
@@ -94,10 +94,9 @@ func (c Cipher) round(item string, index int) (string, error) {
 
 //--- FUNCTIONS
 
-// NewCipher ...
-func NewCipher(key string, rounds int) *Cipher {
-	return &Cipher{
-		Key:    key,
-		Rounds: rounds,
+// NewCustomCipher ...
+func NewCustomCipher(keys []string) *CustomCipher {
+	return &CustomCipher{
+		Keys: keys,
 	}
 }
