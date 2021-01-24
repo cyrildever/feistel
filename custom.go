@@ -3,8 +3,8 @@ package feistel
 import (
 	"errors"
 
+	"github.com/cyrildever/feistel/common/padding"
 	"github.com/cyrildever/feistel/common/utils"
-	"github.com/cyrildever/feistel/padding"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"github.com/cyrildever/go-utls/common/xor"
 )

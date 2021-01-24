@@ -3,7 +3,7 @@ package padding_test
 import (
 	"testing"
 
-	"github.com/cyrildever/feistel/padding"
+	"github.com/cyrildever/feistel/common/padding"
 	"gotest.tools/assert"
 )
 
