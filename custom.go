@@ -5,6 +5,7 @@ import (
 
 	"github.com/cyrildever/feistel/common/padding"
 	"github.com/cyrildever/feistel/common/utils"
+	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"github.com/cyrildever/go-utls/common/xor"
 )
@@ -13,6 +14,7 @@ import (
 
 // CustomCipher uses custom keys instead of the SHA-256 hashing function to provide a new key at each round.
 // The number of rounds is then determined by the number of keys provided.
+// NB: There must be at least two keys.
 type CustomCipher struct {
 	Keys []string
 }
@@ -21,6 +23,10 @@ type CustomCipher struct {
 
 // Encrypt ...
 func (cc CustomCipher) Encrypt(src string) (ciphered []byte, err error) {
+	if len(cc.Keys) < 2 {
+		err = exception.NewWrongCipherParametersError()
+		return
+	}
 	if len(src) == 0 {
 		return
 	}
@@ -50,6 +56,9 @@ func (cc CustomCipher) Encrypt(src string) (ciphered []byte, err error) {
 
 // Decrypt ...
 func (cc CustomCipher) Decrypt(ciphered []byte) (string, error) {
+	if len(cc.Keys) < 2 {
+		return "", exception.NewWrongCipherParametersError()
+	}
 	if len(ciphered) == 0 {
 		return "", nil
 	}

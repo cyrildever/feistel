@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cyrildever/feistel"
+	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"gotest.tools/assert"
 )
@@ -51,4 +52,11 @@ func TestCustomCipher(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, deciphered, ref)
+
+	// Not enough keys
+	cipher = feistel.NewCustomCipher([]string{})
+	_, err = cipher.Encrypt(ref)
+	assert.Error(t, err, "wrong cipher parameters: keys and rounds can't be null")
+	_, ok := err.(*exception.WrongCipherParametersError)
+	assert.Assert(t, ok)
 }

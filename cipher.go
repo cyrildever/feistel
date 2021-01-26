@@ -5,13 +5,15 @@ import (
 
 	"github.com/cyrildever/feistel/common/padding"
 	"github.com/cyrildever/feistel/common/utils"
+	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"github.com/cyrildever/go-utls/common/xor"
 )
 
 //--- TYPES
 
-// Cipher uses the SHA-256 hashing function to create the keys at each round
+// Cipher uses the SHA-256 hashing function to create the keys at each round.
+// NB: There must be at least 2 rounds.
 type Cipher struct {
 	Key    string
 	Rounds int
@@ -21,6 +23,10 @@ type Cipher struct {
 
 // Encrypt ...
 func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
+	if len(c.Key) == 0 || c.Rounds < 2 {
+		err = exception.NewWrongCipherParametersError()
+		return
+	}
 	if len(src) == 0 {
 		return
 	}
@@ -50,6 +56,9 @@ func (c Cipher) Encrypt(src string) (ciphered []byte, err error) {
 
 // Decrypt ...
 func (c Cipher) Decrypt(ciphered []byte) (string, error) {
+	if len(c.Key) == 0 || c.Rounds < 2 {
+		return "", exception.NewWrongCipherParametersError()
+	}
 	if len(ciphered) == 0 {
 		return "", nil
 	}
