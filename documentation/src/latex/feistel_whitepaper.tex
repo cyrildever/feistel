@@ -1,0 +1,286 @@
+% FEISTEL white paper
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[twoside,twocolumn]{article}
+
+\usepackage{blindtext} % Package to generate dummy text throughout this template 
+
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+%\linespread{1.05} % Line spacing - Palatino needs more space between lines
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+\usepackage{eufrak}
+\usepackage{graphicx} % For \scalebox
+
+\usepackage[english]{babel} % Language hyphenation and typographical rules
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+\usepackage{booktabs} % Horizontal rules in tables
+
+\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
+
+\usepackage{enumitem} % Customized lists
+\setlist[itemize]{noitemsep} % Make itemize lists more compact
+
+\usepackage{abstract} % Allows abstract customization
+\renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
+
+\usepackage{titlesec} % Allows customization of titles
+\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
+\renewcommand\thesubsection{\arabic{subsection}} % roman numerals only for subsections
+\titleformat{\section}[block]{\Large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
+\titleformat{\subsection}[block]{\large\scshape}{\thesubsection.}{1em}{} % Change the look of the section titles
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{Feistel Cipher $\bullet$ Cyril Dever} % Custom header text
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+\setlength{\headheight}{14pt}
+
+\usepackage{titling} % Customizing the title section
+
+\usepackage{hyperref} % For hyperlinks in the PDF
+
+\usepackage[symbol]{footmisc} % To use special character in footnote
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\usepackage{outlines}
+\usepackage[font=itshape]{quoting}
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\SetKw{Continue}{continue}
+\SetKw{KwBy}{by}
+
+%----------------------------------------------------------------------------------------
+%	FUNCTIONS
+%----------------------------------------------------------------------------------------
+
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\bsfnote}{\textsuperscript{*}} % for reference to the base64 string note
+\newcommand{\hexnote}{\textsuperscript{$\dagger$}} % for reference to the hex string note
+\newcommand{\mod}[1]{\ \mathrm{mod}\ #1}
+
+%----------------------------------------------------------------------------------------
+%	LISTINGS
+%----------------------------------------------------------------------------------------
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Note}
+\newtheorem*{recall}{Recall}
+
+%----------------------------------------------------------------------------------------
+%	FIGURES
+%----------------------------------------------------------------------------------------
+
+\usepackage{tikz}
+\usepackage{caption}
+
+\usetikzlibrary{shapes.geometric, arrows, calc, positioning}
+
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, text width=1.7cm, inner sep=0.4cm, draw=black]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, inner sep=-0.1cm, draw=black]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzset{XOR/.style={draw,circle,append after command={
+        [shorten >=\pgflinewidth, shorten <=\pgflinewidth,]
+        (\tikzlastnode.north) edge (\tikzlastnode.south)
+        (\tikzlastnode.east) edge (\tikzlastnode.west)
+        }
+    }
+}
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\usepackage[english]{datetime2}
+\DTMsavedate{thedate}{2021-01-31}
+
+\setlength{\droptitle}{-5\baselineskip} % Move the title up
+
+\pretitle{\begin{center}\Large\bfseries}
+\posttitle{\end{center}}
+\title{Feistel Cipher with Hash Round Function} % Title
+\author{%
+    \textsc{Cyril Dever}\\ % Name
+    \normalsize Edgewhere \\ % Institution
+}
+% \date{\today} % Leave empty to omit a date
+\date{\DTMusedate{thedate}}
+\renewcommand{\maketitlehookd}{%
+    \begin{abstract}
+        \noindent We needed an obfuscation tool to secure some data with an almost Format-Preserving Encryption schema.
+    \end{abstract}
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+% Print the title
+\maketitle
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+\lettrine[nindent=0em,lines=3]{W}hen ...
+
+\section{Description}
+
+We herein define $\mathfrak{F}$ our own implementation of a Feistel block cipher\cite{feistel:hf} we use for both encryption and decryption stages. 
+It's an almost Format-Preserving Encryption scheme, "almost" because it depends on the size of the input; if the latter is of even length, then the 
+output will preserve its size; otherwise, we'd pad it \textemdash~see (\ref{eq:padding}).
+
+The formal algorithmic description provided by Wikipedia\footnote{\url{https://en.wikipedia.org/wiki/Feistel_cipher}} is as follows:
+\begin{itemize}
+    \item Let $N = n+1$ be the number of rounds, $K_{0},K_{1},...,K_{n}$ the keys associated with each round and $F: \omega \times \mathcal{K} 
+        \mapsto \omega$ a function of the $(words \times keys)$ space to the $words$ space.
+    \item For each step $i \in [0..n]$, note the encrypted word in step $i$, $m_i = L_i \mathbin\Vert R_i$ with $$
+        \begin{array}{l}
+            L_{i+1} = R_i \\
+            R_{i+1} = L_i \oplus F(L_i,K_i) \\
+        \end{array}$$
+    \item $m_0 = L_0 \mathbin\Vert R_0$ is the unciphered text, and $m_{n+1} = L_{n+1} \mathbin\Vert R_{n+1}$ the ciphered word.
+\end{itemize}
+
+For the round function $F_i$, we don't actually use one different key per round but rather a single key $K$ and the \texttt{SHA-256} hash function 
+applied to the byte array of the right part to which the key is bytewise-added at each round\footnote{a "masking" operation $\mu()$ being applied 
+first on $K$ to make sure to use a key of the same length than the input}:
+\begin{equation}
+    \label{eq:roundFunction}
+    \begin{array}{rl}
+        F_i: \omega \times \mathcal{K}  &\to \omega \\
+                                (x, K)  &\mapsto \texttt{SHA-256} \left(x + \mu(K) \right) \\
+    \end{array}
+\end{equation}
+where $x + \mu(K)$ represents the addition of the UTF-8 charcodes of both terms\footnote{eg. \texttt{a} $\gets 61$, \texttt{b} $\gets 62 \Rightarrow 
+\texttt{a} + \texttt{b} \gets 123 \mapsto \texttt{b01111011}$}.
+
+As mentioned, in case the length of the input $in$ is odd, we add one padding character to the left beforehand because our cipher is a balanced 
+implementation:
+\begin{equation}
+    \label{eq:padding}
+    \begin{array}{l}
+        in \gets\left\{
+            \begin{array}{l}
+                \textbf{if } |in| \mod 2 \neq 0 \\
+                \quad \textbf{ then } \texttt{PAD\_CHAR}\mathbin\Vert in \\
+                \textbf{else } in \\
+            \end{array}
+        \right. \\ \\
+        \Rightarrow in := L \mathbin\Vert R \\
+        \quad \textrm{ with } |L| = |R| = |in| \div 2 \\
+    \end{array}
+\end{equation}
+
+The number of round $N$ is set to $10$ anywhere $\mathfrak{F}$ is used in the oblivion process.
+
+Note that it's been proved \cite{Permutations:lr} that, for such an implementation of the Feistel block cipher, four rounds of permutations are enough 
+to make it "strong", making our choice still very fast and two and half times stronger.
+
+\begin{recall}
+    One of the main advantage of using this Feistel block cipher construction is that encryption and decryption are similar:$$
+        out = \mathfrak{F}(in, K) \iff in = \mathfrak{F}(out, K)
+    $$
+\end{recall}
+
+Figure \ref{fig:feistel} provides a graphical representation of $\mathfrak{F}$.
+\begin{figure}
+    \centering\noindent
+    \begin{tikzpicture} %see 'https://www.iacr.org/authors/tikz/'
+        \centering \noindent
+        % First two rounds
+        \node[draw,thick,minimum width=1cm] (f1) at ($1*(0,-1.5cm)$)  {$F_1$};
+        \node (xor1) [XOR, left of = f1, node distance = 2cm] {};
+        \draw[thick,-latex] (f1) -- (xor1);
+    
+        \node[draw,thick,minimum width=1cm] (f2) at ($2*(0,-1.5cm)$)  {$F_2$};
+        \node (xor2) [XOR, left of = f2, node distance = 2cm] {};
+        \draw[thick,-latex] (f2) -- (xor2);
+        
+        \draw[thick,latex-latex] (f1.east) -| +(1.5cm,-0.5cm) -- ($(xor1) - (0,1cm)$) -- ($(xor1.north) - (0,1.5cm)$);
+        \draw[thick] (xor1.south) -- ($(xor1)+(0,-0.5cm)$) -- ($(f1.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        
+        \draw[thick,latex-] (f2.east) -| +(1.5cm,-0.5cm) -- ($(xor2) - (0,1cm)$);
+        \draw[thick] (xor2.south) -- ($(xor2)+(0,-0.5cm)$) -- ($(f2.east) + (1.5cm,-1cm)$);
+        
+        \draw[thick, densely dotted] ($(f2.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        \draw[thick, densely dotted] ($(xor2) - (0,1cm)$) -- ($(xor2.north) - (0,1.5cm)$);
+        
+        % Middle text
+        \node at (0,-4.5cm) {\scriptsize{for 10 rounds}};
+    
+        % Last two rounds
+        \node[draw,thick,minimum width=1cm] (f3) at ($3*(0,-1.5cm) + (0, -.75cm)$)  {$F_{9}$};
+        \node (xor3) [XOR, left of = f3, node distance = 2cm] {};
+        \draw[thick,-latex] (f3) -- (xor3);
+    
+        \node[draw,thick,minimum width=1cm] (f4) at ($4*(0,-1.5cm) + (0, -.75cm)$)  {$F_{10}$};
+        \node (xor4) [XOR, left of = f4, node distance = 2cm] {};
+        \draw[thick,-latex] (f4) -- (xor4);
+        
+        \draw[thick,latex-latex] (f3.east) -| +(1.5cm,-0.5cm) -- ($(xor3) - (0,1cm)$) -- ($(xor3.north) - (0,1.5cm)$);
+        \draw[thick] (xor3.south) -- ($(xor3)+(0,-0.5cm)$) -- ($(f3.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        
+        \draw[thick, densely dotted] ($(f3.east) + (1.5cm,0cm)$) -- +(0cm,0.5cm);
+        \draw[thick, densely dotted] (xor3.north) -- +(0cm,0.35cm);
+    
+        %% Inputs    
+        \node (p0) [draw,thick,above of = f1, minimum width=5cm,minimum height=0.5cm,node distance=1cm] {$in$}; 
+        \node (l0) [above of = xor1,node distance=2cm] {$L$};
+        \node (r0) [right of = l0, node distance = 4cm] {$R$};
+        \draw[thick,-latex] (l0 |- p0.south) -- (xor1.north);
+        \draw[thick] ($(f1.east)+(1.5cm,0)$) -- +(0,0.75cm);
+    
+        \draw[thick,latex-] (l0 |- p0.north) -- (l0);
+        \draw[thick,latex-] (r0 |- p0.north) -- (r0);
+    
+        %% Outputs
+        \node (p4) [draw,thick,below of = f4, minimum width=5cm,minimum height=0.5cm,node distance=1cm] {$out$}; 
+        \node (l4) [below of = xor4,node distance=2cm] {$L'$};
+        \node (r4) [right of = l4, node distance = 4cm] {$R'$};
+        \draw[thick,latex-latex] (f4.east) -| +(1.5cm,-0.75cm);
+        \draw[thick,-latex] (xor4.south) -- ($(xor4)+(0,-0.75cm)$);
+    
+        \draw[thick,-latex] (l4 |- p4.south) -- (l4);
+        \draw[thick,-latex] (r4 |- p4.south) -- (r4);
+    \end{tikzpicture}
+    \caption{Feistel block cipher $\mathfrak{F}$}
+    \label{fig:feistel}
+\end{figure}
+
+\tableofcontents % Uncomment to add a table of contents
+
+%----------------------------------------------------------------------------------------
+%	REFERENCE LIST
+%----------------------------------------------------------------------------------------
+
+\begin{thebibliography}{99} % Bibliography
+
+\bibitem[1]{feistel:hf}
+Horst Feistel. \emph{Cryptography and Computer Privacy}, Scientific American, 1973.
+
+\bibitem[2]{Permutations:lr}
+Michael Luby, Charles Rackoff. \emph{How to Construct Pseudorandom Permutations from Pseudorandom Functions}, SIAM Journal on Computing, 1988.
+
+\end{thebibliography}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
