@@ -1,6 +1,7 @@
 *.gz
 *.aux
 *_temp.tex
+*_temp.pdf
 *.fdb_latexmk
 *.fls
 *.toc

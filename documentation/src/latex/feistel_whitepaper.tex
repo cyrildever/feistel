@@ -193,15 +193,44 @@ function of the $(words \times keys)$ space to the $words$ space.
     \label{algo:feistel}
 \end{algorithm}
 
+\subsection{Padding}
+\label{padding}
 
-Note that it's been proved \cite{Permutations:lr} that, for such an implementation of the Feistel block cipher, four rounds of permutations are enough 
-to make it "strong", making our choice still very fast and two and half times stronger.
+We could have turned our cipher into a fully FPE-compliant system by forcing the input data to be of even length.
 
-\begin{recall}
-    One of the main advantage of using this Feistel block cipher construction is that encryption and decryption are similar:$$
-        out = \mathfrak{F}(in, K) \iff in = \mathfrak{F}(out, K)
-    $$
-\end{recall}
+Instead, we kept a smoother approach by deciding we'd add the padding ourselves. That way, our users don't have to worry about this step, only that the 
+output might be one character longer than the input (as seen above).
+
+But of course, should you provide data of even length (using your own padding system), then our cipher definitely follows a FPE scheme.
+
+Algorithm \ref{algo:padding} defines our left padding function $P$.
+Let \texttt{PAD\_CHAR} be a padding character\footnote{In our own implementation, we use the UTF-8 \texttt{U+0002} (start-of-text) character}.
+\begin{algorithm}
+    \KwIn{a message $m$, \texttt{PAD\_CHAR}}
+    \KwOut{the balanced message}
+    \eIf{$|m| \mod 2 = 0$}{
+        \Return{$m$}
+    }{
+        \Return{\emph{\texttt{PAD\_CHAR}} $\mathbin\Vert m$}
+    }
+    \caption{Padding $P$}
+    \label{algo:padding}
+\end{algorithm}
+
+Algorithm \ref{algo:unpadding} shows its inverse, ie. the unpadding function.
+
+\begin{algorithm}
+    \KwIn{a padded message $m$, \texttt{PAD\_CHAR}}
+    \KwOut{the unpadded message}
+    \eIf{$m[0] =$ \emph{\texttt{PAD\_CHAR}}}{
+        \Return{$\mathbin\Vert_{i=1}^{|m|-1} m[i]$}
+    }{
+        \Return{$m$}
+    }
+    \caption{Unpadding $P^{-1}$}
+    \label{algo:unpadding}
+\end{algorithm}
+
 
 Figure \ref{fig:feistel} provides a graphical representation of $\mathfrak{F}$.
 \begin{figure}
