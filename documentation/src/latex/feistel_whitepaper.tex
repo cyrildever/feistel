@@ -347,6 +347,20 @@ Let $charcode$ be the UTF-8 character code of the concerned byte.
 For example, the addition of \texttt{a} with \texttt{b} gives:
 \texttt{a} $\gets 61$,  \texttt{b} $\gets 62 \Rightarrow \texttt{a} + \texttt{b} \gets 123 \mapsto \texttt{b01111011}$.
 
+\subsubsection{Wrapping it all up}
+
+We define the final round function $F$ as the hash of the previous addition, the result we XOR with the left part $L$ of the previous round to form the 
+new basis for the next round where $L$ and the output of $F$ are switched.
+\begin{equation}
+    \label{eq:roundFunction}
+    \begin{array}{rl}
+        F: \omega \times \mathcal{K}  &\to \omega \\
+                                (R, K)  &\mapsto \mathfrak{h} \left[ Add \Big(R), \mu(K, |R|) \Big) \right] \\
+    \end{array}
+\end{equation}
+
+$F$ is applied at every round. And our implementation eventually unpads the result of $\mathfrak{F}$ by adding a final $P^{-1}()$ step at the end.
+
 \tableofcontents % Uncomment to add a table of contents
 
 %----------------------------------------------------------------------------------------
