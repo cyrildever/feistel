@@ -1,0 +1,15 @@
+*.gz
+*.aux
+*_temp.tex
+*_temp.pdf
+*.fdb_latexmk
+*.fls
+*.toc
+*.glo
+*.glsdefs
+*.ist
+*.acn
+*.acr
+*.glg
+*.gls
+*.alg
