@@ -231,8 +231,16 @@ Algorithm \ref{algo:unpadding} shows its inverse, ie. the unpadding function.
     \label{algo:unpadding}
 \end{algorithm}
 
+\subsection{Hash Round Function}
+\label{roundFunction}
 
-Figure \ref{fig:feistel} provides a graphical representation of $\mathfrak{F}$.
+Figure \ref{fig:feistel} provides a graphical representation of our cipher $\mathfrak{F}$ in its entirety.
+
+Our implementation takes its robustness by actually not using one different key per round, but rather by using a well-tested hash function\footnote{
+    In our first implementation, we use the \texttt{SHA-256} hash algorithm as $\mathfrak{h}()$ because it is both widely adopted (in particular 
+    natively in most browsers) and yet still very secure at the time of this writing.
+} $\mathfrak{h}()$ and a single key $K$ in its round function $F$.
+
 \begin{figure}
     \centering\noindent
     \begin{tikzpicture} %see 'https://www.iacr.org/authors/tikz/'
@@ -256,14 +264,14 @@ Figure \ref{fig:feistel} provides a graphical representation of $\mathfrak{F}$.
         \draw[thick, densely dotted] ($(xor2) - (0,1cm)$) -- ($(xor2.north) - (0,1.5cm)$);
         
         % Middle text
-        \node at (0,-4.5cm) {\scriptsize{for 10 rounds}};
+        \node at (0,-4.5cm) {\scriptsize{for $n$ rounds}};
     
         % Last two rounds
-        \node[draw,thick,minimum width=1cm] (f3) at ($3*(0,-1.5cm) + (0, -.75cm)$)  {$F_{9}$};
+        \node[draw,thick,minimum width=1cm] (f3) at ($3*(0,-1.5cm) + (0, -.75cm)$)  {$F_{n-1}$};
         \node (xor3) [XOR, left of = f3, node distance = 2cm] {};
         \draw[thick,-latex] (f3) -- (xor3);
     
-        \node[draw,thick,minimum width=1cm] (f4) at ($4*(0,-1.5cm) + (0, -.75cm)$)  {$F_{10}$};
+        \node[draw,thick,minimum width=1cm] (f4) at ($4*(0,-1.5cm) + (0, -.75cm)$)  {$F_{n}$};
         \node (xor4) [XOR, left of = f4, node distance = 2cm] {};
         \draw[thick,-latex] (f4) -- (xor4);
         
@@ -285,17 +293,38 @@ Figure \ref{fig:feistel} provides a graphical representation of $\mathfrak{F}$.
     
         %% Outputs
         \node (p4) [draw,thick,below of = f4, minimum width=5cm,minimum height=0.5cm,node distance=1cm] {$out$}; 
-        \node (l4) [below of = xor4,node distance=2cm] {$L'$};
-        \node (r4) [right of = l4, node distance = 4cm] {$R'$};
         \draw[thick,latex-latex] (f4.east) -| +(1.5cm,-0.75cm);
-        \draw[thick,-latex] (xor4.south) -- ($(xor4)+(0,-0.75cm)$);
-    
-        \draw[thick,-latex] (l4 |- p4.south) -- (l4);
-        \draw[thick,-latex] (r4 |- p4.south) -- (r4);
+        \draw[thick,-latex] (xor4.south) -- ($(xor4)+(0,-0.75cm)$);    
     \end{tikzpicture}
     \caption{Feistel block cipher $\mathfrak{F}$}
     \label{fig:feistel}
 \end{figure}
+
+The round function $F$ thus consists in taking the right side $R$ at each round and apply to it two operations:
+\begin{itemize}
+    \item Add $R$ to the masked key $K$;
+    \item Hash the result $R'$ through $\mathfrak{h}()$.
+\end{itemize} 
+
+\subsubsection{Masking the key}
+
+To enable the XOR part of the Feistel cipher, we have to apply a "masking" operation $\mu()$ on the input key $K$ to make it of length $l = |R|$:
+\begin{small}
+    \begin{equation}
+        \label{eq:masking}
+        \begin{array}{rl}
+            \mu: \mathcal{K} \times \mathbb{N} &\to \mathcal{K} \\
+            (K, l) &\mapsto K' := \left\{
+                \begin{array}{l}
+                    \textrm{if } |K| \geq l, \sum_{i=1}^l K[i] \\ \\
+                    \sum_{i=1}^l (K \times \ceil{|K| \div l})[i] \\
+                \end{array}
+            \right.
+        \end{array}
+    \end{equation}
+\end{small}
+If the key $K$ is too long, the masking function $\mu()$ eventually cuts it, ie. only keeping the $l$-th first bytes.
+And if it is too short, it multiplies it the needed number of times and cut the concatenation to the desired length $l$.
 
 \tableofcontents % Uncomment to add a table of contents
 
