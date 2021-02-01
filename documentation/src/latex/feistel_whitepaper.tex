@@ -326,6 +326,27 @@ To enable the XOR part of the Feistel cipher, we have to apply a "masking" opera
 If the key $K$ is too long, the masking function $\mu()$ eventually cuts it, ie. only keeping the $l$-th first bytes.
 And if it is too short, it multiplies it the needed number of times and cut the concatenation to the desired length $l$.
 
+\subsubsection{Adding parts}
+
+At each round, we add the masked key $K'$ with the right part of the previous round $R$ through the function $Add()$ described in Algorithm 
+\ref{algo:addition}.
+
+Let $charcode$ be the UTF-8 character code of the concerned byte.
+\begin{algorithm}
+    \KwIn{$R$, $K' \gets \mu(K, |R|)$}
+    \KwOut{$R'$}
+    initialize $R' \gets \emptyset$ of length $|R|$; \\
+    \ForEach{charcode $i \in R$ and $i \in K'$}{
+        $R'[i] := R[i] + K'[i]$;
+    }
+    \Return{$R'$}
+    \caption{Addition function $Add$}
+    \label{algo:addition}
+\end{algorithm}
+
+For example, the addition of \texttt{a} with \texttt{b} gives:
+\texttt{a} $\gets 61$,  \texttt{b} $\gets 62 \Rightarrow \texttt{a} + \texttt{b} \gets 123 \mapsto \texttt{b01111011}$.
+
 \tableofcontents % Uncomment to add a table of contents
 
 %----------------------------------------------------------------------------------------
