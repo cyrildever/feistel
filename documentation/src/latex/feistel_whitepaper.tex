@@ -40,7 +40,7 @@
 \pagestyle{fancy} % All pages have headers and footers
 \fancyhead{} % Blank out the default header
 \fancyfoot{} % Blank out the default footer
-\fancyhead[C]{Feistel Cipher $\bullet$ Cyril Dever} % Custom header text
+\fancyhead[C]{Feistel Cipher with Hash Round Function $\bullet$ Cyril Dever} % Custom header text
 \fancyfoot[RO,LE]{\thepage} % Custom footer text
 \setlength{\headheight}{14pt}
 
@@ -122,7 +122,8 @@
 \date{\DTMusedate{thedate}}
 \renewcommand{\maketitlehookd}{%
     \begin{abstract}
-        \noindent We needed an obfuscation tool to secure some data with an almost Format-Preserving Encryption schema.
+        \noindent We define an obfuscation tool to secure data with an almost Format-Preserving Encryption process. Implementing a Feistel block cipher 
+        with a round function using any robust hashing function, it provides you with a one-way tool to both encrypt and decrypt the data.
     \end{abstract}
 }
 
@@ -139,57 +140,59 @@
 
 \section{Introduction}
 
-\lettrine[nindent=0em,lines=3]{W}hen ...
+\lettrine[nindent=0em,lines=3]{P}rovided you need a robust obfuscation function for protecting your data more than an actual encryption cipher, meet 
+our own implementation of the well-known Feistel network algorithm.
 
-\section{Description}
-
-We herein define $\mathfrak{F}$ our own implementation of a Feistel block cipher\cite{feistel:hf} we use for both encryption and decryption stages. 
-It's an almost Format-Preserving Encryption scheme, "almost" because it depends on the size of the input; if the latter is of even length, then the 
-output will preserve its size; otherwise, we'd pad it \textemdash~see (\ref{eq:padding}).
-
-The formal algorithmic description provided by Wikipedia\footnote{\url{https://en.wikipedia.org/wiki/Feistel_cipher}} is as follows:
+It's secure, yet very fast, and it comes with two handy features:
 \begin{itemize}
-    \item Let $N = n+1$ be the number of rounds, $K_{0},K_{1},...,K_{n}$ the keys associated with each round and $F: \omega \times \mathcal{K} 
-        \mapsto \omega$ a function of the $(words \times keys)$ space to the $words$ space.
-    \item For each step $i \in [0..n]$, note the encrypted word in step $i$, $m_i = L_i \mathbin\Vert R_i$ with $$
-        \begin{array}{l}
-            L_{i+1} = R_i \\
-            R_{i+1} = L_i \oplus F(L_i,K_i) \\
-        \end{array}$$
-    \item $m_0 = L_0 \mathbin\Vert R_0$ is the unciphered text, and $m_{n+1} = L_{n+1} \mathbin\Vert R_{n+1}$ the ciphered word.
+    \item Encryption and decryption both uses the same way to work, ie. the use of only one function is needed for both obfuscating and recovering data;
+    \item The end result respects Format-Preserving Encryption (FPE), ie. the length of the output is the same as the one of the output. % // TODO
 \end{itemize}
 
-For the round function $F_i$, we don't actually use one different key per round but rather a single key $K$ and the \texttt{SHA-256} hash function 
-applied to the byte array of the right part to which the key is bytewise-added at each round\footnote{a "masking" operation $\mu()$ being applied 
-first on $K$ to make sure to use a key of the same length than the input}:
-\begin{equation}
-    \label{eq:roundFunction}
-    \begin{array}{rl}
-        F_i: \omega \times \mathcal{K}  &\to \omega \\
-                                (x, K)  &\mapsto \texttt{SHA-256} \left(x + \mu(K) \right) \\
-    \end{array}
-\end{equation}
-where $x + \mu(K)$ represents the addition of the UTF-8 charcodes of both terms\footnote{eg. \texttt{a} $\gets 61$, \texttt{b} $\gets 62 \Rightarrow 
-\texttt{a} + \texttt{b} \gets 123 \mapsto \texttt{b01111011}$}.
+\section{The Algorithm}
 
-As mentioned, in case the length of the input $in$ is odd, we add one padding character to the left beforehand because our cipher is a balanced 
-implementation:
+\subsection{Formal Description}
+
+We herein define $\mathfrak{F}$ our own implementation of a Feistel block cipher\cite{feistel:hf}. 
+
+We use a balanced implementation, cutting the input data into two equal parts, processing them through our round function (see section 
+\ref{roundFunction}), to finally concatenating the end results to form the final obfuscated ciphertext.
+
+It is an almost Format-Preserving Encryption scheme; "almost" because it depends on the size of the input. If the latter is of even length, then the 
+output will preserve its size; otherwise, we'd pad it at the start of the process (see section \ref{padding}), making it longer by one character:
 \begin{equation}
-    \label{eq:padding}
+    \label{fpe}
     \begin{array}{l}
-        in \gets\left\{
+        y \gets \mathfrak{F}(x) \\
+        \Rightarrow |y| = \left\{
             \begin{array}{l}
-                \textbf{if } |in| \mod 2 \neq 0 \\
-                \quad \textbf{ then } \texttt{PAD\_CHAR}\mathbin\Vert in \\
-                \textbf{else } in \\
+                \textbf{if } x \mod 2 = 0 \textbf{ then } |x| \\
+                \textbf{else } |x\ + 1 \\
             \end{array}
-        \right. \\ \\
-        \Rightarrow in := L \mathbin\Vert R \\
-        \quad \textrm{ with } |L| = |R| = |in| \div 2 \\
+            \right.
     \end{array}
 \end{equation}
 
-The number of round $N$ is set to $10$ anywhere $\mathfrak{F}$ is used in the oblivion process.
+Let us start with what we use as the basis for our own implementation.
+The formal description provided by Wikipedia\footnote{\url{https://en.wikipedia.org/wiki/Feistel_cipher}} for a Feistel block cipher is as described in 
+Algorithm \ref{algo:feistel}.
+
+Let $N = n+1$ be the number of rounds, $K_{0},K_{1},...,K_{n}$ the keys associated with each round and $F: \omega \times \mathcal{K} \mapsto \omega$ a 
+function of the $(words \times keys)$ space to the $words$ space.
+\begin{algorithm}
+    \KwIn{a message $m$}
+    \KwOut{the ciphertext $c$}
+    note the encrypted word in step $i$, $m_i := L_i \mathbin\Vert R_i$ with $m_0 := L_0 \mathbin\Vert R_0$ as the unciphered message; \\
+    \For{$i \gets 0$ \KwTo $n$ \KwBy $1$}{
+        \qquad $L_{i+1} \gets R_i$; \\
+        \qquad $R_{i+1} \gets L_i \oplus F(L_i,K_i)$; \\
+    }
+    $m_{n+1} := L_{n+1} \mathbin\Vert R_{n+1}$; \\
+    \Return{$m_{n+1}$}
+    \caption{Standard Feistel cipher}
+    \label{algo:feistel}
+\end{algorithm}
+
 
 Note that it's been proved \cite{Permutations:lr} that, for such an implementation of the Feistel block cipher, four rounds of permutations are enough 
 to make it "strong", making our choice still very fast and two and half times stronger.
