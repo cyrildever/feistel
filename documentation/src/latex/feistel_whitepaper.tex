@@ -361,6 +361,36 @@ new basis for the next round where $L$ and the output of $F$ are switched.
 
 $F$ is applied at every round. And our implementation eventually unpads the result of $\mathfrak{F}$ by adding a final $P^{-1}()$ step at the end.
 
+\subsection{Full cipher}
+
+The last parameter of the whole cipher $\mathfrak{F}$ is the number of rounds $N$.
+Note that it has been proved \cite{Permutations:lr} that, for such an implementation of the Feistel block cipher, four rounds of permutations are 
+enough to make it "strong"\footnote{but we usually use at least 10 rounds}.
+
+We finally define the full cipher $\mathfrak{F}$ that respects Figure \ref{fig:feistel} with $F_i = F(R, K)$ at round $i$ as follows:
+\begin{equation}
+    \label{eq:fullCipher}
+    \begin{array}{rl}
+        \mathfrak{F}: \omega \times \mathcal{K} \times \mathbb{N} &\to \omega \\
+                                                        (m, K, N) &\mapsto \mathfrak{F}(P(m), K, N) \\
+    \end{array}
+\end{equation}
+
+\begin{recall}
+    One of the main advantage of using this Feistel block cipher construction is that encryption and decryption are similar:$$
+        out = \mathfrak{F}(in, K_\gamma, n) \iff in = \mathfrak{F}(out, K_\gamma, n)
+    $$
+\end{recall}
+
+\section{Implementation}
+
+We created two different implementations for now: one in JavaScript\footnote{\url{https://npmjs.org/package/feistel-ceipher}} and one in Go
+\footnote{\url{https://github.com/cyrildever/feistel}}.
+
+On both environments our latest tests show no significant impact with a $10$ round cipher (a few dozens of nanoseconds at most). The results are in fact 
+mostly impacted by the speed of the used hash function on the machine it is run (and obviously a little slower in the browser of an ordinary PC).
+
+%\vfill\eject % To force break column if need be
 \tableofcontents % Uncomment to add a table of contents
 
 %----------------------------------------------------------------------------------------
