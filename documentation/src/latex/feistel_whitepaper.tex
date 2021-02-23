@@ -62,11 +62,15 @@
 %	FUNCTIONS
 %----------------------------------------------------------------------------------------
 
+\usepackage{amsmath}
+
 \newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\concat}{\mathbin{{+}\mspace{-8mu}{+}}}
 \newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
 \newcommand{\bsfnote}{\textsuperscript{*}} % for reference to the base64 string note
 \newcommand{\hexnote}{\textsuperscript{$\dagger$}} % for reference to the hex string note
-\newcommand{\mod}[1]{\ \mathrm{mod}\ #1}
+\newcommand{\modulo}[1]{\ \mathrm{mod}\ #1}
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
 
 %----------------------------------------------------------------------------------------
 %	LISTINGS
@@ -164,10 +168,10 @@ output will preserve its size; otherwise, we'd pad it at the start of the proces
     \label{fpe}
     \begin{array}{l}
         y \gets \mathfrak{F}(x) \\
-        \Rightarrow |y| = \left\{
+        \Rightarrow \norm{y} = \left\{
             \begin{array}{l}
-                \textbf{if } x \mod 2 = 0 \textbf{ then } |x| \\
-                \textbf{else } |x| + 1 \\
+                \textbf{if } x \modulo 2 = 0 \textbf{ then } \norm{x} \\
+                \textbf{else } \norm{x} + 1 \\
             \end{array}
             \right.
     \end{array}
@@ -181,12 +185,12 @@ function of the $(words \times keys)$ space to the $words$ space.
 \begin{algorithm}
     \KwIn{a message $m$}
     \KwOut{the ciphertext $c$}
-    let the encrypted word in step $i$ be $m_i := L_i \mathbin\Vert R_i$ with $m_0 := L_0 \mathbin\Vert R_0$ as the unciphered message; \\
+    let the encrypted word in step $i$ be $m_i := L_i \concat R_i$ with $m_0 := L_0 \concat R_0$ as the unciphered message; \\
     \For{$i \gets 0$ \KwTo $n$ \KwBy $1$}{
         \qquad $L_{i+1} \gets R_i$; \\
         \qquad $R_{i+1} \gets L_i \oplus F(L_i,K_i)$; \\
     }
-    $m_N := L_{n+1} \mathbin\Vert R_{n+1}$; \\
+    $m_N := L_{n+1} \concat R_{n+1}$; \\
     \Return{$m_N$}
     \caption{Standard Feistel cipher}
     \label{algo:feistel}
@@ -207,10 +211,10 @@ Let \texttt{PAD\_CHAR} be a padding character\footnote{In our own implementation
 \begin{algorithm}
     \KwIn{a message $m$, \texttt{PAD\_CHAR}}
     \KwOut{the balanced message}
-    \eIf{$|m| \mod 2 = 0$}{
+    \eIf{$\norm{m} \modulo 2 = 0$}{
         \Return{$m$}
     }{
-        \Return{\emph{\texttt{PAD\_CHAR}} $\mathbin\Vert m$}
+        \Return{\emph{\texttt{PAD\_CHAR}} $\concat~m$}
     }
     \caption{Padding $P$}
     \label{algo:padding}
@@ -222,7 +226,7 @@ Algorithm \ref{algo:unpadding} shows its inverse, ie. the unpadding function.
     \KwIn{a padded message $m$, \texttt{PAD\_CHAR}}
     \KwOut{the unpadded message}
     \eIf{$m[0] =$ \emph{\texttt{PAD\_CHAR}}}{
-        \Return{$\mathbin\Vert_{i=1}^{|m|-1} m[i]$}
+        \Return{$\concat {\Big|}_{i=1}^{\norm{m}-1} m[i]$}
     }{
         \Return{$m$}
     }
@@ -315,15 +319,15 @@ Let $substr(x, start)$ be a function that keeps the substring of the passed $x$ 
     \label{eq:shifting}
     \begin{array}{rl}
         S: \mathcal{K} \times \mathbb{N} &\to \mathcal{K} \\
-            (K, i) &\mapsto substr(K \ll i, 1) \mathbin\Vert K[0] \\
+            (K, i) &\mapsto substr(K \ll i, 1) \concat K[0] \\
     \end{array}
 \end{equation}
 
-That way, we build a "new" key from $K$ for $|K|$ rounds, adding security to our round function.
+That way, we build a "new" key from $K$ for $\norm{K}$ rounds, adding security to our round function.
 
 \subsubsection{Masking the new key}
 
-To enable the XOR part of the Feistel cipher, we have to apply a "masking" operation $\mu()$ on the input key $K$ to make it of length $l = |R|$:
+To enable the XOR part of the Feistel cipher, we have to apply a "masking" operation $\mu()$ on the input key $K$ to make it of length $l = \norm{R}$:
 \begin{small}
     \begin{equation}
         \label{eq:masking}
@@ -331,8 +335,8 @@ To enable the XOR part of the Feistel cipher, we have to apply a "masking" opera
             \mu: \mathcal{K} \times \mathbb{N} &\to \mathcal{K} \\
             (K, l) &\mapsto K' := \left\{
                 \begin{array}{l}
-                    \textrm{if } |K| \geq l, \sum_{i=1}^l K[i] \\ \\
-                    \sum_{i=1}^l (K \times \ceil{|K| \div l})[i] \\
+                    \textrm{if } \norm{K} \geq l, \sum_{i=1}^l K[i] \\ \\
+                    \sum_{i=1}^l (K \times \ceil{\frac{\norm{K}}{l}})[i] \\
                 \end{array}
             \right.
         \end{array}
@@ -348,9 +352,9 @@ At each round, we add the masked key $K'$ with the right part of the previous ro
 
 Let $charcode$ be the UTF-8 character code of the concerned byte.
 \begin{algorithm}
-    \KwIn{$R$, $K' \gets \mu(K, |R|)$}
+    \KwIn{$R$, $K' \gets \mu(K, \norm{R})$}
     \KwOut{$R'$}
-    initialize $R' \gets \emptyset$ of length $|R|$; \\
+    initialize $R' \gets \emptyset$ of length $\norm{R}$; \\
     \ForEach{charcode $i \in R$ and $i \in K'$}{
         $R'[i] := R[i] + K'[i]$;
     }
@@ -371,7 +375,7 @@ round to form the new basis for the next round where $L$ and the output of $F$ a
         \label{eq:roundFunction}
         \begin{array}{rl}
             F: \omega \times \mathcal{K} \times \mathbb{N}  &\to \omega \\
-                (R, K, i)  &\mapsto \mathfrak{h} \left[ A \Bigg(R, \mu \Big( S(K,i), |R| \Big) \Bigg) \right] \\
+                (R, K, i)  &\mapsto \mathfrak{h} \left[ A \Bigg(R, \mu \Big( S(K,i), \norm{R} \Big) \Bigg) \right] \\
         \end{array}
     \end{equation}
 \end{small}
