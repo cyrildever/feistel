@@ -2,6 +2,7 @@ package feistel
 
 import (
 	"github.com/cyrildever/feistel/common/utils"
+	"github.com/cyrildever/feistel/common/utils/base256"
 	"github.com/cyrildever/feistel/common/utils/hash"
 	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
@@ -10,7 +11,7 @@ import (
 
 //--- TYPES
 
-// FPECipher builds a format-preserving encrypted cipher using the key with the hash engine at each round.
+// FPECipher builds a format-preserving encrypted cipher using the key with the passed hash engine at each round.
 // NB: There must be at least 2 rounds.
 type FPECipher struct {
 	Engine hash.Engine
@@ -21,7 +22,7 @@ type FPECipher struct {
 //--- METHODS
 
 // Encrypt ...
-func (f FPECipher) Encrypt(src string) (ciphered []byte, err error) {
+func (f FPECipher) Encrypt(src string) (ciphered base256.Readable, err error) {
 	if len(f.Key) == 0 || f.Rounds < 2 || !hash.IsAvailableEngine(f.Engine) {
 		err = exception.NewWrongCipherParametersError()
 		return
@@ -62,24 +63,28 @@ func (f FPECipher) Encrypt(src string) (ciphered []byte, err error) {
 		}
 		parts = []string{left, right}
 	}
-	// TODO Add a ToReadable() that transforms the string to a Base-256 readable representation and return the string (and not the bytes)
-	ciphered = []byte(parts[0] + parts[1])
+	ciphered = base256.ToBase256Readable([]byte(parts[0] + parts[1]))
 	return
 }
 
 // Decrypt ...
 // TODO Should take a string and not bytes, and apply a FromReadable() function to transform it back to its actual byte values beforehand
-func (f FPECipher) Decrypt(ciphered []byte) (string, error) {
+func (f FPECipher) Decrypt(ciphered base256.Readable) (string, error) {
 	if len(f.Key) == 0 || f.Rounds < 2 || !hash.IsAvailableEngine(f.Engine) {
 		return "", exception.NewWrongCipherParametersError()
 	}
-	if len(ciphered) == 0 {
+	if ciphered.IsEmpty() {
 		return "", nil
 	}
 	// Apply the FPE Feistel cipher
-	left, right, err := utils.Split(string(ciphered))
+	left, right, err := utils.Split(string(ciphered.Bytes()))
 	if err != nil {
 		return "", err
+	}
+	// Compensating the way Split() works by moving the first byte at right to the end of left if using an odd number of rounds
+	if f.Rounds%2 != 0 && len(left) != len(right) {
+		left += right[:1]
+		right = right[1:]
 	}
 	for i := 0; i < f.Rounds; i++ {
 		leftRound := left
