@@ -5,8 +5,7 @@
 ![GitHub issues](https://img.shields.io/github/issues/cyrildever/feistel)
 ![GitHub license](https://img.shields.io/github/license/cyrildever/feistel)
 
-This is a Golang library implementing the Feistel cipher for "almost" format-preserving encryption.
-"Almost" because as we use a balanced version of the implementation, we need the input string to be of even length. If that's the case, the length will be preserved, otherwise the output will be one character longer.
+This is a Golang library implementing the Feistel cipher for format-preserving encryption.
 
 ### Motivation
 
@@ -48,9 +47,7 @@ To ensure maximum security, I recommend you use a 256-bit key or longer and a mi
 The decryption process uses the obfuscated byte array and pass it to the `Decrypt()` method of the `Cipher`.
 
 ```golang
-import (
-  "github.com/cyrildever/feistel"
-)
+import "github.com/cyrildever/feistel"
 
 source := "my-source-data"
 
@@ -76,6 +73,18 @@ cipher = feistel.NewCustomCipher(keys)
 ```
 In that case, the number of rounds depends on the number of provided keys.
 
+Finally, you might want to use the latest cipher, providing true format-preserving encryption:
+```golang
+import "github.com/cyrildever/feistel/common/utils/hash"
+
+cipher = feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+obfuscated, err := cipher.Encrypt(source)
+
+str := obfuscated.String()
+assert.Equal(t, len(str), len(source))
+```
+
 
 ### Other implementations
 
@@ -89,4 +98,4 @@ See the [LICENSE](LICENSE) file.
 
 
 <hr />
-&copy; 2021 Cyril Dever. All rights reserved.
+&copy; 2019-2021 Cyril Dever. All rights reserved.
