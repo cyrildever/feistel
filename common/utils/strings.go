@@ -27,12 +27,8 @@ func Extract(from string, startIndex, desiredLength int) string {
 	return repeated[startIndex : startIndex+desiredLength]
 }
 
-// Split splits a byte array in two equal parts
+// Split splits a byte array in two parts, the first part being one character shorter in case the passed item has odd length
 func Split(item string) (left, right string, err error) {
-	if len(item)%2 != 0 {
-		err = errors.New("invalid string length: cannot be split")
-		return
-	}
 	half := len(item) / 2
 	left = item[:half]
 	right = item[half:]
