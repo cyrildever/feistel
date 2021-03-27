@@ -30,8 +30,12 @@ func (cc CustomCipher) Encrypt(src string) (ciphered []byte, err error) {
 	if len(src) == 0 {
 		return
 	}
-	// Apply the Feistel cipher
+	// Apply the balanced Feistel cipher
 	data := padding.Apply([]byte(src))
+	if len(data)%2 != 0 {
+		err = errors.New("invalid string length: cannot be split")
+		return
+	}
 	left, right, err := utils.Split(string(data))
 	if err != nil {
 		return
@@ -65,7 +69,7 @@ func (cc CustomCipher) Decrypt(ciphered []byte) (string, error) {
 	if len(ciphered)%2 != 0 {
 		return "", errors.New("invalid obfuscated data")
 	}
-	// Apply Feistel cipher
+	// Apply the balanced Feistel cipher
 	left, right, err := utils.Split(string(ciphered))
 	if err != nil {
 		return "", err
