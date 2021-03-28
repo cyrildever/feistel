@@ -1,0 +1,402 @@
+% FEISTEL FPE white paper
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[twoside,twocolumn]{article}
+
+\usepackage{blindtext} % Package to generate dummy text throughout this template 
+
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+%\linespread{1.05} % Line spacing - Palatino needs more space between lines
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+\usepackage{eufrak}
+\usepackage{graphicx} % For \scalebox
+
+\usepackage[english]{babel} % Language hyphenation and typographical rules
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+\usepackage{booktabs} % Horizontal rules in tables
+
+\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
+
+\usepackage{enumitem} % Customized lists
+\setlist[itemize]{noitemsep} % Make itemize lists more compact
+
+\usepackage{abstract} % Allows abstract customization
+\renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
+
+\usepackage{titlesec} % Allows customization of titles
+\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
+\renewcommand\thesubsection{\arabic{subsection}} % roman numerals only for subsections
+\titleformat{\section}[block]{\Large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
+\titleformat{\subsection}[block]{\large\scshape}{\thesubsection.}{1em}{} % Change the look of the section titles
+
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{Feistel Cipher with Hash Round Function $\bullet$ Cyril Dever} % Custom header text
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+\setlength{\headheight}{14pt}
+
+\usepackage{titling} % Customizing the title section
+
+\usepackage{hyperref} % For hyperlinks in the PDF
+
+\usepackage[symbol]{footmisc} % To use special character in footnote
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\usepackage{outlines}
+\usepackage[font=itshape]{quoting}
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\SetKw{Continue}{continue}
+\SetKw{KwBy}{by}
+
+%----------------------------------------------------------------------------------------
+%	FUNCTIONS
+%----------------------------------------------------------------------------------------
+
+\usepackage{amsmath}
+
+\newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\concat}{\mathbin{{+}\mspace{-8mu}{+}}}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\bsfnote}{\textsuperscript{*}} % for reference to the base64 string note
+\newcommand{\hexnote}{\textsuperscript{$\dagger$}} % for reference to the hex string note
+\newcommand{\modulo}[1]{\ \mathrm{mod}\ #1}
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+
+%----------------------------------------------------------------------------------------
+%	LISTINGS
+%----------------------------------------------------------------------------------------
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Note}
+\newtheorem*{recall}{Recall}
+
+%----------------------------------------------------------------------------------------
+%	FIGURES
+%----------------------------------------------------------------------------------------
+
+\usepackage{tikz}
+\usepackage{caption}
+
+\usetikzlibrary{shapes.geometric, arrows, calc, positioning}
+
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, text width=1.7cm, inner sep=0.4cm, draw=black]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, inner sep=-0.1cm, draw=black]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzset{XOR/.style={draw,circle,append after command={
+        [shorten >=\pgflinewidth, shorten <=\pgflinewidth,]
+        (\tikzlastnode.north) edge (\tikzlastnode.south)
+        (\tikzlastnode.east) edge (\tikzlastnode.west)
+        }
+    }
+}
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\usepackage[english]{datetime2}
+\DTMsavedate{thedate}{2021-03-27} % Elaborates on V1
+
+\setlength{\droptitle}{-5\baselineskip} % Move the title up
+
+\pretitle{\begin{center}\Large\bfseries}
+\posttitle{\end{center}}
+\title{Format-Preserving Encryption \\using Hash Functions \\in a Feistel Cipher} % Title
+\author{%
+    \textsc{Cyril Dever}\\ % Name
+    \normalsize Edgewhere \\ % Institution
+}
+% \date{\today} % Leave empty to omit a date
+\date{\DTMusedate{thedate}}
+\renewcommand{\maketitlehookd}{%
+    \begin{abstract}
+        \noindent We define an obfuscation tool to secure data with a true Format-Preserving Encryption process. By implementing a Feistel block 
+        cipher with a round function using any robust hashing function, it provides you with a tool to obfuscate strings in a safe, fast and secure way
+        featuring the convenience of format-preserving. It might be used to create digital confidential redacted documents.
+    \end{abstract}
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+% Print the title
+\maketitle
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+\lettrine[nindent=0em,lines=3]{P}rovided you need a robust obfuscation tool for protecting your data more than an actual encryption cipher, meet our 
+newest implementation of the well-known Feistel network algorithm.
+
+It is secure yet very fast and comes with the very handy feature of Format-Preserving Encryption (FPE), ie. it takes a string and returns a string, 
+and the length of the output is the same as the one of the output. The latter is said "readable" in the sense that it uses a possibly readable 
+character set (getting rid of any weird control character). Our implementation uses a specific extract of the first 512-characters UTF-8 table.
+
+When used within a document you wish to anonymize for instance, it preserves the general form of the document, only obfuscating the needed data.
+For example, the company name in "Edgewhere is a technology service company" would output as "Ki(\#q|r5* is a technology service company".
+
+But further development could even allow a full anonymization by changing each and every occurrence to a different output, making it impossible to link 
+the pseudonyms to their underlying value. It becomes the digital version of redacting classified information\footnote{Please ask for my 
+\texttt{redacted} library available in different language implementations for that purpose}.
+
+\section{The Algorithm}
+
+\subsection{Formal Description}
+
+We herein define $\mathfrak{F}$ our own implementation of a Feistel block cipher\cite{feistel:hf}. 
+
+We use an unbalanced implementation, cutting the input data into two parts, eventually preparing them before processing them through our round function 
+(see section \ref{roundFunction}), to finally concatenating the end results to form the final obfuscated ciphertext.
+
+It is a fully Format-Preserving Encryption scheme.
+
+Let us start with what we use as the basis for our own implementation: the formal description provided by Wikipedia
+\footnote{\url{https://en.wikipedia.org/wiki/Feistel_cipher}} for a Feistel block cipher is as described in Algorithm \ref{algo:feistel}.
+
+Let $N = n+1$ be the number of rounds, $K_{0},K_{1},...,K_{n}$ the keys associated with each round and $F: \omega \times \mathcal{K} \mapsto \omega$ a 
+function of the $(words \times keys)$ space to the $words$ space.
+\begin{algorithm}
+    \KwIn{a message $m$}
+    \KwOut{the ciphertext $c$}
+    let the encrypted word in step $i$ be $m_i := L_i \concat R_i$ with $m_0 := L_0 \concat R_0$ as the unciphered message; \\
+    \For{$i \gets 0$ \KwTo $n$ \KwBy $1$}{
+        \qquad $L_{i+1} \gets R_i$; \\
+        \qquad $R_{i+1} \gets L_i \oplus F(L_i,K_i)$; \\
+    }
+    $m_N := L_{n+1} \concat R_{n+1}$; \\
+    \Return{$m_N$}
+    \caption{Standard Feistel cipher}
+    \label{algo:feistel}
+\end{algorithm}
+
+\subsection{Hash Round Function}
+\label{roundFunction}
+
+Figure \ref{fig:feistel} provides a graphical representation of our cipher $\mathfrak{F}$ in its entirety.
+
+Our implementation takes its robustness by not actually using one different key per round, but rather a well-tested hash function\footnote{
+    In our latest FPE implementation, we offer to choose between four well-known and well-tested hashing algorithms: \texttt{Blake2b}, 
+    \texttt{Keccak}, \texttt{SHA-256} or \texttt{SHA-3}, all in their 256-bits versions. 
+} $\mathfrak{h}()$ and a single key $K$ in its round function $F$.
+
+\begin{figure}
+    \centering\noindent
+    \begin{tikzpicture} % see 'https://www.iacr.org/authors/tikz/'
+        \centering \noindent
+        % First two rounds
+        \node[draw,thick,minimum width=1cm] (f1) at ($1*(0,-1.5cm)$)  {$F_1$};
+        \node (xor1) [XOR, left of = f1, node distance = 2cm] {};
+        \draw[thick,-latex] (f1) -- (xor1);
+    
+        \node[draw,thick,minimum width=1cm] (f2) at ($2*(0,-1.5cm)$)  {$F_2$};
+        \node (xor2) [XOR, left of = f2, node distance = 2cm] {};
+        \draw[thick,-latex] (f2) -- (xor2);
+        
+        \draw[thick,latex-latex] (f1.east) -| +(1.5cm,-0.5cm) -- ($(xor1) - (0,1cm)$) -- ($(xor1.north) - (0,1.5cm)$);
+        \draw[thick] (xor1.south) -- ($(xor1)+(0,-0.5cm)$) -- ($(f1.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        
+        \draw[thick,latex-] (f2.east) -| +(1.5cm,-0.5cm) -- ($(xor2) - (0,1cm)$);
+        \draw[thick] (xor2.south) -- ($(xor2)+(0,-0.5cm)$) -- ($(f2.east) + (1.5cm,-1cm)$);
+        
+        \draw[thick, densely dotted] ($(f2.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        \draw[thick, densely dotted] ($(xor2) - (0,1cm)$) -- ($(xor2.north) - (0,1.5cm)$);
+        
+        % Middle text
+        \node at (0,-4.5cm) {\scriptsize{for $n$ rounds}};
+    
+        % Last two rounds
+        \node[draw,thick,minimum width=1cm] (f3) at ($3*(0,-1.5cm) + (0, -.75cm)$)  {$F_{n-1}$};
+        \node (xor3) [XOR, left of = f3, node distance = 2cm] {};
+        \draw[thick,-latex] (f3) -- (xor3);
+    
+        \node[draw,thick,minimum width=1cm] (f4) at ($4*(0,-1.5cm) + (0, -.75cm)$)  {$F_{n}$};
+        \node (xor4) [XOR, left of = f4, node distance = 2cm] {};
+        \draw[thick,-latex] (f4) -- (xor4);
+        
+        \draw[thick,latex-latex] (f3.east) -| +(1.5cm,-0.5cm) -- ($(xor3) - (0,1cm)$) -- ($(xor3.north) - (0,1.5cm)$);
+        \draw[thick] (xor3.south) -- ($(xor3)+(0,-0.5cm)$) -- ($(f3.east) + (1.5cm,-1cm)$) -- +(0,-0.5cm);
+        
+        \draw[thick, densely dotted] ($(f3.east) + (1.5cm,0cm)$) -- +(0cm,0.5cm);
+        \draw[thick, densely dotted] (xor3.north) -- +(0cm,0.35cm);
+    
+        %% Inputs    
+        \node (p0) [draw,thick,above of = f1, minimum width=5cm,minimum height=0.5cm,node distance=1cm] {$in$}; 
+        \node (l0) [above of = xor1,node distance=2cm] {$L$};
+        \node (r0) [right of = l0, node distance = 4cm] {$R$};
+        \draw[thick,-latex] (l0 |- p0.south) -- (xor1.north);
+        \draw[thick] ($(f1.east)+(1.5cm,0)$) -- +(0,0.75cm);
+    
+        \draw[thick,latex-] (l0 |- p0.north) -- (l0);
+        \draw[thick,latex-] (r0 |- p0.north) -- (r0);
+    
+        %% Outputs
+        \node (p4) [draw,thick,below of = f4, minimum width=5cm,minimum height=0.5cm,node distance=1cm] {$out$}; 
+        \draw[thick,latex-latex] (f4.east) -| +(1.5cm,-0.75cm);
+        \draw[thick,-latex] (xor4.south) -- ($(xor4)+(0,-0.75cm)$);    
+    \end{tikzpicture}
+    \caption{Feistel block cipher $\mathfrak{F}$}
+    \label{fig:feistel}
+\end{figure}
+
+The round function $F$ thus consists in taking the right side $R$ at each round and apply to it two operations:
+\begin{itemize}
+    \item Shift $K$ by the number of round;
+    \item Add $R$ to the masked key $K'$ (of the shifted $K$);
+    \item Hash the result $R'$ through $\mathfrak{h}()$.
+\end{itemize}
+
+\subsubsection{Shifting the key}
+
+To shift the passed key $K$ by one character at each round, we use the shifting function $S()$.
+
+Let $substr(x, start)$ be a function that keeps the substring of the passed $x$ from $start$ to end.
+\begin{equation}
+    \label{eq:shifting}
+    \begin{array}{rl}
+        S: \mathcal{K} \times \mathbb{N} &\to \mathcal{K} \\
+            (K, i) &\mapsto substr(K \ll i, 1) \concat K[0] \\
+    \end{array}
+\end{equation}
+
+That way, we build a "new" key from $K$ for $\norm{K}$ rounds, adding security to our round function.
+
+\subsubsection{Masking the new key}
+
+To enable the XOR part of the Feistel cipher, we have to apply a "masking" operation $\mu()$ on the input key $K$ to make it of length $l = \norm{R}$:
+\begin{small}
+    \begin{equation}
+        \label{eq:masking}
+        \begin{array}{rl}
+            \mu: \mathcal{K} \times \mathbb{N} &\to \mathcal{K} \\
+            (K, l) &\mapsto K' := \left\{
+                \begin{array}{l}
+                    \textrm{if } \norm{K} \geq l, \sum_{i=1}^l K[i] \\ \\
+                    \sum_{i=1}^l (K \times \ceil{\frac{\norm{K}}{l}})[i] \\
+                \end{array}
+            \right.
+        \end{array}
+    \end{equation}
+\end{small}
+If the key $K$ is too long, the masking function $\mu()$ eventually cuts it, ie. only keeping the $l$-th first bytes.
+And if it is too short, it multiplies it the needed number of times and cut the concatenation to the desired length $l$.
+
+\subsubsection{Adding parts}
+
+At each round, we add the masked key $K'$ with the right part of the previous round $R$ through the function $A()$ described in Algorithm 
+\ref{algo:addition}.
+
+Let $charcode$ be the UTF-8 character code of the concerned byte.
+\begin{algorithm}
+    \KwIn{$R$, $K' \gets \mu(K, \norm{R})$}
+    \KwOut{$R'$}
+    initialize $R' \gets \emptyset$ of length $\norm{R}$; \\
+    \ForEach{charcode $i \in R$ and $i \in K'$}{
+        $R'[i] := R[i] + K'[i]$;
+    }
+    \Return{$R'$}
+    \caption{Addition function $A$}
+    \label{algo:addition}
+\end{algorithm}
+
+For example, the addition of \texttt{a} with \texttt{b} gives:
+\texttt{a} $\gets 61$,  \texttt{b} $\gets 62 \Rightarrow \texttt{a} + \texttt{b} \gets 123 \mapsto \texttt{b01111011}$.
+
+\subsubsection{Wrapping it all up}
+
+We define the final round function $F$ at round $i$ as the hash of the previous addition, the result we XOR with the left part $L$ of the previous 
+round to form the new basis for the next round where $L$ and the output of $F$ are switched.
+\begin{small}
+    \begin{equation}
+        \label{eq:roundFunction}
+        \begin{array}{rl}
+            F: \omega \times \mathcal{K} \times \mathbb{N}  &\to \omega \\
+                (R, K, i)  &\mapsto \mathfrak{h} \left[ A \Bigg(R, \mu \Big( S(K,i), \norm{R} \Big) \Bigg) \right] \\
+        \end{array}
+    \end{equation}
+\end{small}
+
+To be able to respect FPE, a neutral byte may be added to either the output of $F$ or the left part before applying the XOR operation.
+
+$F$ is applied at every round. And our implementation eventually unpads the result of $\mathfrak{F}$ by adding a final $P^{-1}()$ step at the end.
+
+\subsection{Full cipher}
+
+The last parameter of the whole cipher $\mathfrak{F}$ is the number of rounds $N$.
+Note that it has been proved \cite{Permutations:lr} that, for such an implementation of the Feistel block cipher, four rounds of permutations are 
+enough to make it "strong"\footnote{but we usually use at least 10 rounds}.
+
+We finally define the full cipher $\mathfrak{F}$ that respects Figure \ref{fig:feistel} with $F_i = F(R, K, i)$ at round $i$ as follows:
+\begin{equation}
+    \label{eq:fullCipher}
+    \begin{array}{rl}
+        \mathfrak{F}: \omega \times \mathcal{K} \times \mathbb{N} &\to \omega \\
+                        (m, K, N) &\mapsto \mathfrak{F}(P(m), K, N) \\
+    \end{array}
+\end{equation}
+
+\begin{recall}
+    One of the main advantage of using this Feistel block cipher construction is that encryption and decryption are similar:$$
+        out = \mathfrak{F}(in, K_\gamma, n) \iff in = \mathfrak{F}(out, K_\gamma, n)
+    $$
+\end{recall}
+
+\subsection{Decipher}
+
+Unlike the classic operation of a Feistel network, respecting FPE forces us to apply different operations for ciphering and deciphering. In particular, 
+in case the input is of odd length, and the number of rounds used is also odd, we need to change a little the way the split between left and right 
+parts is initially made when deciphering.
+
+Whereas, the split function generally applied keeps the smallest part to the left side (when the input is of odd length), the first split must make the 
+the right part the smallest before the first round. This is done to ensure the data provided to the round function when deciphering is the same as what 
+was the final parts when ciphering.
+
+\section{Implementation}
+
+We enriched our initial two different implementations with the new fully FPE cipher: the one in 
+JavaScript\footnote{\url{https://npmjs.org/package/feistel-ceipher}} and the one in Go\footnote{\url{https://github.com/cyrildever/feistel}}, and we 
+also created a specific \texttt{redacted} library to push the concept to its full achievement.
+
+On both environments, our latest tests show no significant impact with even a $255$ round FPE cipher (a few dozens of nanoseconds at most). The results 
+are in fact mostly impacted by the speed of the used hash function on the machine it is run (and obviously a little slower in the browser of a 
+commodity desktop computer).
+
+% \vfill\eject % To force break column if need be
+% \tableofcontents % Uncomment to add a table of contents
+
+%----------------------------------------------------------------------------------------
+%	REFERENCE LIST
+%----------------------------------------------------------------------------------------
+
+\begin{thebibliography}{99} % Bibliography
+
+\bibitem[1]{feistel:hf}
+Horst Feistel. \emph{Cryptography and Computer Privacy}, Scientific American, 1973.
+
+\bibitem[2]{Permutations:lr}
+Michael Luby, Charles Rackoff. \emph{How to Construct Pseudorandom Permutations from Pseudorandom Functions}, SIAM Journal on Computing, 1988.
+
+\end{thebibliography}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}

@@ -5,7 +5,7 @@
 ![GitHub issues](https://img.shields.io/github/issues/cyrildever/feistel)
 ![GitHub license](https://img.shields.io/github/license/cyrildever/feistel)
 
-This is a Golang library implementing the Feistel cipher for format-preserving encryption.
+This is a Golang library implementing the Feistel cipher for Format-Preserving Encryption (FPE).
 
 ### Motivation
 
@@ -30,8 +30,6 @@ The algorithmic description (provided by Wikipedia) of the encryption is as foll
 * ![$m_{0}=L_{0}||R_{0}$](https://render.githubusercontent.com/render/math?math=m_{0}=L_{0}||R_{0}) is the unciphered text, ![$m_{n+1}=L_{n+1}||R_{n+1}$](https://render.githubusercontent.com/render/math?math=m_{n%2B1}=L_{n%2B1}||R_{n%2B1}) is the ciphered word. 
 
 There is no restriction on the ![$F$](https://render.githubusercontent.com/render/math?math=F) function other than the XOR operation must be possible. For simplicity, we will choose ![$L_1$](https://render.githubusercontent.com/render/math?math=L_1) of the same size as ![$R_1$](https://render.githubusercontent.com/render/math?math=R_1) and the function ![$F$](https://render.githubusercontent.com/render/math?math=F) shall transform a word of length ![$k$](https://render.githubusercontent.com/render/math?math=k) into a word of length ![$k$](https://render.githubusercontent.com/render/math?math=k) (and this for all ![$k$](https://render.githubusercontent.com/render/math?math=k)).
-
-_NB: You may also read the full white paper [here](documentation/src/latex/feistel_whitepaper.pdf)._
 
 
 ### Usage
@@ -73,7 +71,7 @@ cipher = feistel.NewCustomCipher(keys)
 ```
 In that case, the number of rounds depends on the number of provided keys.
 
-Finally, you might want to use the latest cipher, providing true format-preserving encryption:
+Finally, you might want to use the latest cipher, providing true format-preserving encryption for strings:
 ```golang
 import "github.com/cyrildever/feistel/common/utils/hash"
 
@@ -88,7 +86,16 @@ assert.Equal(t, len(str), len(source))
 
 ### Other implementations
 
-For those interested, I also made another implementation of this Feistel cipher in [Typescript](https://github.com/cyrildever/feistel-cipher).
+For those interested, I also made another implementation of these ciphers in [Typescript](https://github.com/cyrildever/feistel-cipher).
+
+I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
+
+
+### White papers
+
+I wrote two white papers to finally make it a fully FPE scheme:
+* the [original one](documentation/src/latex/feistel_whitepaper.pdf) which provided an "almost" format-preserving encryption;
+* the [lastest one](documentation/src/latex/fpe_whitepaper.pdf) which elaborates on this first one to push the algorithm towards true format-preserving encryption for strings.
 
 
 ### License
