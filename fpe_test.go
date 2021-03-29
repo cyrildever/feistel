@@ -21,6 +21,11 @@ func TestFPEEncrypt(t *testing.T) {
 	assert.Equal(t, found.Len(), len("Edgewhere"))
 	assert.Equal(t, found.String(), expected)
 	assert.Equal(t, found.ToHex(), "2a5d07024f5a501409")
+
+	blake2, _ := feistel.NewFPECipher(hash.BLAKE2b, "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692", 10).Encrypt("Edgewhere")
+	assert.Assert(t, blake2.String() != expected)
+	expectedBlake2 := "¼u*$q0up¢"
+	assert.Equal(t, blake2.String(), expectedBlake2)
 }
 
 // TestFPEDecrypt ...
@@ -47,6 +52,10 @@ func TestFPEDecrypt(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.DeepEqual(t, b256, ref)
+
+	fromBlake2 := base256.Readable("¼u*$q0up¢")
+	blake2, _ := feistel.NewFPECipher(hash.BLAKE2b, "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692", 10).Decrypt(fromBlake2)
+	assert.Equal(t, blake2, expected)
 }
 
 // TestFPEEncryptDecrypt ...

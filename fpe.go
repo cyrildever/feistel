@@ -123,7 +123,7 @@ func (f FPECipher) round(item string, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hashed, err := utils.Hash([]byte(addition))
+	hashed, err := hash.H([]byte(addition), f.Engine)
 	if err != nil {
 		return "", err
 	}
