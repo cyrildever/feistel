@@ -7,6 +7,25 @@ import (
 	"gotest.tools/assert"
 )
 
+// TestAdd ...
+func TestAdd(t *testing.T) {
+	ref := "ÄÆ"
+	ab := "ab"
+	cd := "cd"
+	found, err := utils.Add(ab, cd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, found, ref)
+}
+
+// TestExtract ...
+func TestExtract(t *testing.T) {
+	ref := "s is a testThis is a tes"
+	found := utils.Extract("This is a test", 3, 24)
+	assert.Equal(t, found, ref)
+}
+
 // TestSplit ...
 func TestSplit(t *testing.T) {
 	left := "edge"

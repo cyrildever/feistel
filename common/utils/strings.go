@@ -8,7 +8,7 @@ import (
 // Add adds two strings in the sense that each charCode are added
 func Add(str1, str2 string) (string, error) {
 	if len(str1) != len(str2) {
-		return "", errors.New("to be added, byte arrays must be of the same length")
+		return "", errors.New("to be added, items must be of the same length")
 	}
 	added := ""
 	for i := 0; i < len(str1); i++ {
