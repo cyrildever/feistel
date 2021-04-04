@@ -68,7 +68,6 @@ func (f FPECipher) Encrypt(src string) (ciphered base256.Readable, err error) {
 }
 
 // Decrypt ...
-// TODO Should take a string and not bytes, and apply a FromReadable() function to transform it back to its actual byte values beforehand
 func (f FPECipher) Decrypt(ciphered base256.Readable) (string, error) {
 	if len(f.Key) == 0 || f.Rounds < 2 || !hash.IsAvailableEngine(f.Engine) {
 		return "", exception.NewWrongCipherParametersError()
