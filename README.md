@@ -86,7 +86,9 @@ assert.Equal(t, len(str), len(source))
 
 ### Other implementations
 
-For those interested, I also made another implementation of these ciphers in [Typescript](https://github.com/cyrildever/feistel-cipher).
+For those interested, I also made two other implementations of these ciphers:
+* In [Typescript](https://github.com/cyrildever/feistel-cipher) for the browser;
+* In [Scala](https://github.com/cyrildever/feistel-jar) for the JVM.
 
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
 
