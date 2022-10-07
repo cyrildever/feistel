@@ -43,7 +43,14 @@ func (b256 Readable) NonEmpty() bool {
 }
 
 // String ...
-func (b256 Readable) String() string {
+//
+// NB: By passing `true` as argument, you signify you don't want to use the readable charset but force the ASCII rendering,
+// implying that you'd probably get unreadable characters if the underlying byte array uses byte that ranges over 127 but that
+// you'd get the correct length when using the len() function on the resulting string
+func (b256 Readable) String(useAscii ...bool) string {
+	if len(useAscii) == 1 && useAscii[0] {
+		return string(b256.Bytes())
+	}
 	return string(b256)
 }
 

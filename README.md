@@ -80,8 +80,21 @@ cipher = feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 
 obfuscated, err := cipher.Encrypt(source)
 
 str := obfuscated.String()
-assert.Equal(t, len(str), len(source))
+assert.Equal(t, len([]rune(str)), len(source)) // The source and the obfuscated result have the same number of characters
+
+ascii := obfuscated.String(true)
+assert.Equal(t, len(ascii), len(source)) // You must use the `true` argument to the String() method to be sure of that equality in Go (see below)
+
+assert.DeepEqual(t, len(obfuscated.Bytes()), len(source))
 ```
+
+As stated in the example above, the result of the cipher's `Encrypt()` method is a `Base256Readable` object.
+The `String()` method of the latter uses a special 256 charset (see [here](common/utils/base256/readable.go)) which may result in the use of characters that are more than one-byte encoded, thus resulting in an unequality in the results when simply using the `len()` function.
+But the underlying byte slice is of correct length, as well as the number of runes, ie. the number of characters to display.
+
+So, for example, you should always use the `Bytes()` method of the result to write bytes directly to your files, instead of the `String()` method which should only be used when displaying (to a screen, to stdout, ...) or use `String(true)` with the risk of having to print unreadable characters if the underlying bytes don't have values within the 33 to 126 range.
+
+Regarding the equality, keep in mind that this is due to the fact that the `len()` function in Go doesn't actually count the number of characters of a string but the length of its underlying byte slice. If the string uses characters that a multiple-byte encoded, then the `len()` function won't return the correct number of actual characters.
 
 
 ### Other implementations
