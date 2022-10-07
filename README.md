@@ -94,7 +94,7 @@ But the underlying byte slice is of correct length, as well as the number of run
 
 So, for example, you should always use the `Bytes()` method of the result to write bytes directly to your files, instead of the `String()` method which should only be used when displaying (to a screen, to stdout, ...) or use `String(true)` with the risk of having to print unreadable characters if the underlying bytes don't have values within the 33 to 126 range.
 
-Regarding the equality, keep in mind that this is due to the fact that the `len()` function in Go doesn't actually count the number of characters of a string but the length of its underlying byte slice. If the string uses characters that a multiple-byte encoded, then the `len()` function won't return the correct number of actual characters.
+Regarding the equality, keep in mind that this is due to the fact that the `len()` function in Go doesn't actually count the number of characters of a string but the length of its underlying byte slice. If the string uses characters that is multiple-byte encoded, then the `len()` function won't return the correct number of actual characters.
 
 
 ### Other implementations
