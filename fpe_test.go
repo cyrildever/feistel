@@ -72,3 +72,16 @@ func TestFPEEncryptDecrypt(t *testing.T) {
 	}
 	assert.Equal(t, decrypted, ref)
 }
+
+func TestBase256String(t *testing.T) {
+	source := "my-source-data"
+	cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+	obfuscated, err := cipher.Encrypt(source)
+	assert.DeepEqual(t, obfuscated.Bytes(), []byte{62, 125, 126, 123, 99, 124, 118, 109, 108, 121, 97, 49, 33, 101})
+	assert.NilError(t, err)
+	str := obfuscated.String(true)
+	assert.Equal(t, str, ">}~{c|vmlya1!e") // Fully readable because, by some chance, the underlying byte slice has all bytes ranging from 33 to 126 (see above)
+	assert.Equal(t, len(source), len(str))
+	assert.DeepEqual(t, len(obfuscated.Bytes()), len(source)) // Always true
+}
