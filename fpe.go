@@ -2,6 +2,7 @@ package feistel
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math/bits"
 
 	"github.com/cyrildever/feistel/common/utils"
@@ -76,6 +77,20 @@ func (f FPECipher) EncryptNumber(src uint64) (ciphered base256.Readable, err err
 		err = exception.NewWrongCipherParametersError()
 		return
 	}
+
+	if src < 256 {
+		bytes := make([]byte, 1)
+		bytes = append(bytes, encodeInt(src)...)
+		res, e := f.Encrypt(string(bytes))
+		if e != nil {
+			err = e
+			return
+		}
+		ciphered = res
+		err = fmt.Errorf("too small to respect length")
+		return
+	}
+
 	bytes := encodeInt(src)
 	str := string(bytes)
 

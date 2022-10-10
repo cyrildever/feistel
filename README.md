@@ -77,7 +77,7 @@ import "github.com/cyrildever/feistel/common/utils/hash"
 
 cipher = feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
 
-obfuscated, err := cipher.Encrypt(source)
+obfuscated, err := cipher.EncryptString(source)
 
 str := obfuscated.String()
 assert.Equal(t, len([]rune(str)), len(source)) // The source and the obfuscated result have the same number of characters
@@ -104,6 +104,31 @@ For those interested, I also made two other implementations of these ciphers:
 * In [Scala](https://github.com/cyrildever/feistel-jar) for the JVM.
 
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
+
+
+### Specific development
+
+I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the visible format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method.
+
+```golang
+source := 123456789 // 9 digits
+cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+obfuscated, _ := cipher.EncryptNumber(uint64(source))
+assert.Equal(t, obfuscated.Uint64(), uint64(22780178))
+assert.Equal(t, obfuscated.ToNumber(), "22780178") // Only 8 digits
+
+assert.Equal(t, obfuscated.ToNumber(9), "022780178") // To print 9 digits like the source
+
+deobfuscated, _ := cipher.DecryptNumber(obfuscated)
+assert.Equal(t, deobfuscated, uint64(source))
+```
+
+As you can see, it means that the returned `Readable` type embeds two new methods to retrieve such results:
+- The `Uint64()` method which returns the integer value (the eventual sign is left to its own devices);
+- The `ToNumber()` method which returns its stringified version, eventually zero-padded to match the minimum length passed as argument (this could be useful to preserve for sure the number of digits to print, as the encryption through the Feistel cipher may result in a smaller number than the original).
+
+**IMPORTANT:** Due to the way the Feistel cipher operates, numbers below 256 can't preserve the length when using the `EncryptNumber()` method. If length matters, use `EncryptString()` instead. 
 
 
 ### White papers

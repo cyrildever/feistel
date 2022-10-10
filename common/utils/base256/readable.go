@@ -3,6 +3,7 @@ package base256
 import (
 	"encoding/binary"
 	"fmt"
+	"math/bits"
 
 	utls "github.com/cyrildever/go-utls/common/utils"
 )
@@ -116,6 +117,15 @@ func HexToReadable(hex string) (b256 Readable, err error) {
 	if err != nil {
 		return
 	}
+	b256 = ToBase256Readable(bytes)
+	return
+}
+
+// NumberToReadable ...
+func NumberToReadable(n uint64) (b256 Readable, err error) {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, n)
+	bytes := buf[bits.LeadingZeros64(n)>>3:]
 	b256 = ToBase256Readable(bytes)
 	return
 }

@@ -110,4 +110,17 @@ func TestReadableNumber(t *testing.T) {
 	deobfuscated, err := cipher.DecryptNumber(obfuscated)
 	assert.NilError(t, err)
 	assert.Equal(t, deobfuscated, source)
+
+	// Numbers below 256 don't respect length during encryption
+	source = uint64(123)
+
+	obfuscated, err = cipher.EncryptNumber(source)
+	assert.Error(t, err, "too small to respect length") // Hence the error
+	assert.Equal(t, obfuscated.Uint64(), uint64(24359))
+	assert.Equal(t, obfuscated.ToNumber(), "24359")
+
+	obfuscated, _ = base256.NumberToReadable(24359)
+	deobfuscated, err = cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, source)
 }
