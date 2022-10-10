@@ -1,6 +1,9 @@
 package base256
 
 import (
+	"encoding/binary"
+	"fmt"
+
 	utls "github.com/cyrildever/go-utls/common/utils"
 )
 
@@ -57,6 +60,28 @@ func (b256 Readable) String(useAscii ...bool) string {
 // ToHex ...
 func (b256 Readable) ToHex() string {
 	return utls.ToHex(b256.Bytes())
+}
+
+// ToNumber returns the stringified value of the underlying integer
+//
+// You may pass a minimum size for the returned number to add padding zeroes accordingly
+func (b256 Readable) ToNumber(nbZeroPad ...int) string {
+	var length int
+	if len(nbZeroPad) > 0 {
+		length = nbZeroPad[0]
+	}
+	format := "%" + fmt.Sprintf("0%dd", length)
+	return fmt.Sprintf(format, b256.Uint64())
+}
+
+// Uint64 ...
+func (b256 Readable) Uint64() uint64 {
+	length := int(8 * (float64(len(b256.Bytes())/8) + 1))
+	buf := make([]byte, length)
+	for i, b := range b256.Bytes() {
+		buf[i+length-len(b256.Bytes())] = b
+	}
+	return binary.BigEndian.Uint64(buf)
 }
 
 //--- FUNCTION

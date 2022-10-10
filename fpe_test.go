@@ -73,15 +73,41 @@ func TestFPEEncryptDecrypt(t *testing.T) {
 	assert.Equal(t, decrypted, ref)
 }
 
-func TestBase256String(t *testing.T) {
+// TestReadableString ...
+func TestReadableString(t *testing.T) {
 	source := "my-source-data"
 	cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
 
-	obfuscated, err := cipher.Encrypt(source)
+	obfuscated, err := cipher.EncryptString(source)
 	assert.DeepEqual(t, obfuscated.Bytes(), []byte{62, 125, 126, 123, 99, 124, 118, 109, 108, 121, 97, 49, 33, 101})
 	assert.NilError(t, err)
-	str := obfuscated.String(true)
-	assert.Equal(t, str, ">}~{c|vmlya1!e") // Fully readable because, by some chance, the underlying byte slice has all bytes ranging from 33 to 126 (see above)
-	assert.Equal(t, len(source), len(str))
+	strAscii := obfuscated.String(true)
+	assert.Equal(t, strAscii, ">}~{c|vmlya1!e") // Fully readable because, by some chance, the underlying byte slice has all bytes ranging from 33 to 126 (see above)
+	assert.Equal(t, len(source), len(strAscii))
 	assert.DeepEqual(t, len(obfuscated.Bytes()), len(source)) // Always true
+
+	strNotAscii := obfuscated.String()
+	assert.Equal(t, strNotAscii, "`ÃÄÁ§Â¼²±¿¥RB©")
+	assert.Assert(t, len(source) != len(strNotAscii)) // Because of the use of multi-byte encoded characters to make them readable
+	assert.Equal(t, len(source), len([]rune(strNotAscii)))
+
+	deciphered, err := cipher.DecryptString(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deciphered, source)
+}
+
+// TestReadableNumber ...
+func TestReadableNumber(t *testing.T) {
+	source := uint64(123456789)
+	cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+	obfuscated, err := cipher.EncryptNumber(source)
+	assert.NilError(t, err)
+	assert.Equal(t, obfuscated.Uint64(), uint64(22780178))
+	assert.Equal(t, obfuscated.ToNumber(), "22780178")
+	assert.Equal(t, obfuscated.ToNumber(9), "022780178")
+
+	deobfuscated, err := cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, source)
 }

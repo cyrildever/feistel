@@ -1,6 +1,9 @@
 package feistel
 
 import (
+	"encoding/binary"
+	"math/bits"
+
 	"github.com/cyrildever/feistel/common/utils"
 	"github.com/cyrildever/feistel/common/utils/base256"
 	"github.com/cyrildever/feistel/common/utils/hash"
@@ -67,6 +70,23 @@ func (f FPECipher) Encrypt(src string) (ciphered base256.Readable, err error) {
 	return
 }
 
+// EncryptNumber ...
+func (f FPECipher) EncryptNumber(src uint64) (ciphered base256.Readable, err error) {
+	if len(f.Key) == 0 || f.Rounds < 2 || !hash.IsAvailableEngine(f.Engine) {
+		err = exception.NewWrongCipherParametersError()
+		return
+	}
+	bytes := encodeInt(src)
+	str := string(bytes)
+
+	return f.Encrypt(str)
+}
+
+// EncryptString ...
+func (f FPECipher) EncryptString(src string) (ciphered base256.Readable, err error) {
+	return f.Encrypt(src)
+}
+
 // Decrypt ...
 func (f FPECipher) Decrypt(ciphered base256.Readable) (string, error) {
 	if len(f.Key) == 0 || f.Rounds < 2 || !hash.IsAvailableEngine(f.Engine) {
@@ -114,6 +134,20 @@ func (f FPECipher) Decrypt(ciphered base256.Readable) (string, error) {
 	return string([]byte(left + right)), nil
 }
 
+// DecryptNumber ...
+func (f FPECipher) DecryptNumber(ciphered base256.Readable) (uint64, error) {
+	deciphered, err := f.Decrypt(ciphered)
+	if err != nil {
+		return 0, err
+	}
+	return encodeByte([]byte(deciphered)), nil
+}
+
+// DecryptString ...
+func (f FPECipher) DecryptString(ciphered base256.Readable) (string, error) {
+	return f.Decrypt(ciphered)
+}
+
 // Feistel implementation
 
 // round is the function applied at each round of the obfuscation process to the right side of the Feistel cipher
@@ -139,4 +173,20 @@ func NewFPECipher(engine hash.Engine, key string, rounds int) *FPECipher {
 		Key:    key,
 		Rounds: rounds,
 	}
+}
+
+//--- utilities
+
+func encodeInt(x uint64) []byte {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, x)
+	return buf[bits.LeadingZeros64(x)>>3:]
+}
+
+func encodeByte(x []byte) uint64 {
+	buf := make([]byte, 8)
+	for i, b := range x {
+		buf[i+8-len(x)] = b
+	}
+	return binary.BigEndian.Uint64(buf)
 }
