@@ -96,6 +96,8 @@ So, for example, you should always use the `Bytes()` method of the result to wri
 
 Regarding the equality, keep in mind that this is due to the fact that the `len()` function in Go doesn't actually count the number of characters of a string but the length of its underlying byte slice. If the string uses characters that is multiple-byte encoded, then the `len()` function won't return the correct number of actual characters.
 
+**IMPORTANT:** Due to the way the Feistel cipher operates, a word formed of a single character encoded on a single-byte (like `a` for example) is not modified when using the `Encrypt()` or `EncryptString()` methods.
+
 
 ### Other implementations
 
@@ -106,9 +108,9 @@ For those interested, I also made two other implementations of these ciphers:
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
 
 
-### Specific development
+### Specific development in Golang
 
-I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the visible format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method.
+I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the visible format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method (see padding options and restriction for numbers lower than 256 below).
 
 ```golang
 source := 123456789 // 9 digits
@@ -128,7 +130,9 @@ As you can see, it means that the returned `Readable` type embeds two new method
 - The `Uint64()` method which returns the integer value (the eventual sign is left to its own devices);
 - The `ToNumber()` method which returns its stringified version, eventually zero-padded to match the minimum length passed as argument (this could be useful to preserve for sure the number of digits to print, as the encryption through the Feistel cipher may result in a smaller number than the original).
 
-**IMPORTANT:** Due to the way the Feistel cipher operates, numbers below 256 can't preserve the length when using the `EncryptNumber()` method. If length matters, use `EncryptString()` instead. 
+_NB: You might want to use the [`NumberToReadable()`](common/utils/base256/readable.go) function when using the ciphered number for decryption._
+
+**IMPORTANT:** Due to the way the Feistel cipher operates, numbers below 256 (ie. only one-byte long) can't preserve the length when using the `EncryptNumber()` method. If length matters, consider using `EncryptString()` instead.
 
 
 ### White papers

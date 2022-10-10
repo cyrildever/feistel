@@ -111,7 +111,7 @@ func TestReadableNumber(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, deobfuscated, source)
 
-	// Numbers below 256 don't respect length during encryption
+	// Numbers below 256 don't preserve length during encryption
 	source = uint64(123)
 
 	obfuscated, err = cipher.EncryptNumber(source)
