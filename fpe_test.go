@@ -6,6 +6,7 @@ import (
 	"github.com/cyrildever/feistel"
 	"github.com/cyrildever/feistel/common/utils/base256"
 	"github.com/cyrildever/feistel/common/utils/hash"
+	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"gotest.tools/assert"
 )
@@ -115,7 +116,9 @@ func TestReadableNumber(t *testing.T) {
 	source = uint64(123)
 
 	obfuscated, err = cipher.EncryptNumber(source)
-	assert.Error(t, err, "too small to respect length") // Hence the error
+	assert.Error(t, err, "too small to preserve length") // Hence the error
+	_, ok := err.(*exception.TooSmallToPreserveLengthError)
+	assert.Assert(t, ok)
 	assert.Equal(t, obfuscated.Uint64(), uint64(24359))
 	assert.Equal(t, obfuscated.ToNumber(), "24359")
 

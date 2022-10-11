@@ -2,7 +2,6 @@ package feistel
 
 import (
 	"encoding/binary"
-	"fmt"
 	"math/bits"
 
 	"github.com/cyrildever/feistel/common/utils"
@@ -80,18 +79,18 @@ func (f FPECipher) EncryptNumber(src uint64) (ciphered base256.Readable, err err
 
 	if src < 256 {
 		bytes := make([]byte, 1)
-		bytes = append(bytes, encodeInt(src)...)
+		bytes = append(bytes, uint64ToBytes(src)...)
 		res, e := f.Encrypt(string(bytes))
 		if e != nil {
 			err = e
 			return
 		}
 		ciphered = res
-		err = fmt.Errorf("too small to respect length")
+		err = exception.NewTooSmallToPreserveLengthError()
 		return
 	}
 
-	bytes := encodeInt(src)
+	bytes := uint64ToBytes(src)
 	str := string(bytes)
 
 	return f.Encrypt(str)
@@ -155,7 +154,7 @@ func (f FPECipher) DecryptNumber(ciphered base256.Readable) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return encodeByte([]byte(deciphered)), nil
+	return bytesToUint64([]byte(deciphered))
 }
 
 // DecryptString ...
@@ -192,16 +191,19 @@ func NewFPECipher(engine hash.Engine, key string, rounds int) *FPECipher {
 
 //--- utilities
 
-func encodeInt(x uint64) []byte {
+func uint64ToBytes(x uint64) []byte {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, x)
 	return buf[bits.LeadingZeros64(x)>>3:]
 }
 
-func encodeByte(x []byte) uint64 {
+func bytesToUint64(x []byte) (uint64, error) {
+	if len(x) > 8 {
+		return 0, exception.NewNotUint64Error()
+	}
 	buf := make([]byte, 8)
 	for i, b := range x {
 		buf[i+8-len(x)] = b
 	}
-	return binary.BigEndian.Uint64(buf)
+	return binary.BigEndian.Uint64(buf), nil
 }
