@@ -110,7 +110,7 @@ I also created a special library for redacting classified documents using the ne
 
 ### Specific development
 
-I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the visible format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method (see padding options and restriction for numbers lower than 256 below).
+I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the _visible_ format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method (see padding options and restriction for numbers lower than `256` below).
 
 ```golang
 source := 123456789 // 9 digits
