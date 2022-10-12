@@ -126,4 +126,10 @@ func TestReadableNumber(t *testing.T) {
 	deobfuscated, err = cipher.DecryptNumber(obfuscated)
 	assert.NilError(t, err)
 	assert.Equal(t, deobfuscated, source)
+
+	source = uint64(18446744073709551615) // max accepted uint64 value
+	obfuscated, err = cipher.EncryptNumber(source)
+	assert.NilError(t, err)
+	assert.Equal(t, obfuscated.Uint64(), uint64(17630367666640955566))
+	assert.Equal(t, obfuscated.ToNumber(), "17630367666640955566")
 }

@@ -134,6 +134,8 @@ _NB: You might want to use the [`NumberToReadable()`](common/utils/base256/reada
 
 **IMPORTANT:** Due to the way the Feistel cipher operates, numbers below 256 (ie. only one-byte long) can't preserve the length when using the `EncryptNumber()` method. If length matters, consider using `EncryptString()` instead.
 
+Should you want to use a number with value higher than the accepted max `uint64` value by Golang (`18446744073709551615`) or a floating number, you probably want to use splitting strategies. For example, split it in two numbers that respect the maximum boundaries of a large integer or use both parts (integer and decimal) of the float but not the decimal point itself and rebuild the number afterwards.
+
 
 ### White papers
 

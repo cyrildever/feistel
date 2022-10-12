@@ -77,10 +77,9 @@ func (b256 Readable) ToNumber(nbZeroPad ...int) string {
 
 // Uint64 ...
 func (b256 Readable) Uint64() uint64 {
-	length := int(8 * (float64(len(b256.Bytes())/8) + 1))
-	buf := make([]byte, length)
+	buf := make([]byte, 8)
 	for i, b := range b256.Bytes() {
-		buf[i+length-len(b256.Bytes())] = b
+		buf[i+8-b256.Len()] = b
 	}
 	return binary.BigEndian.Uint64(buf)
 }
