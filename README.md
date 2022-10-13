@@ -77,7 +77,7 @@ import "github.com/cyrildever/feistel/common/utils/hash"
 
 cipher = feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
 
-obfuscated, err := cipher.Encrypt(source)
+obfuscated, err := cipher.EncryptString(source)
 
 str := obfuscated.String()
 assert.Equal(t, len([]rune(str)), len(source)) // The source and the obfuscated result have the same number of characters
@@ -96,6 +96,8 @@ So, for example, you should always use the `Bytes()` method of the result to wri
 
 Regarding the equality, keep in mind that this is due to the fact that the `len()` function in Go doesn't actually count the number of characters of a string but the length of its underlying byte slice. If the string uses characters that is multiple-byte encoded, then the `len()` function won't return the correct number of actual characters.
 
+**IMPORTANT:** Due to the way the Feistel cipher operates, a word formed of a single character encoded on a single-byte (like `a` for example) is not modified when using the `Encrypt()` or `EncryptString()` methods.
+
 
 ### Other implementations
 
@@ -104,6 +106,35 @@ For those interested, I also made two other implementations of these ciphers:
 * In [Scala](https://github.com/cyrildever/feistel-jar) for the JVM.
 
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
+
+
+### Specific development
+
+I mainly use this library to manipulate text files, ie. strings. But, because the "Format" word in the FPE acronym could have different meanings, I've implemented an extra feature for the `FPECipher`: the possibility to preserve the _visible_ format when the input is a number, ie. if you use a 9-digit number, you could get a 9-digit number from the `EncryptNumber()` method (see below for padding options and restrictions to numbers lower than `256`).
+
+```golang
+source := 123456789 // 9 digits
+cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+obfuscated, _ := cipher.EncryptNumber(uint64(source))
+assert.Equal(t, obfuscated.Uint64(), uint64(22780178))
+assert.Equal(t, obfuscated.ToNumber(), "22780178") // Only 8 digits
+
+assert.Equal(t, obfuscated.ToNumber(9), "022780178") // To print 9 digits like the source
+
+deobfuscated, _ := cipher.DecryptNumber(obfuscated)
+assert.Equal(t, deobfuscated, uint64(source))
+```
+
+As you can see, it means that the returned `Readable` type embeds two new methods to retrieve such results:
+- The `Uint64()` method which returns the integer value (the eventual sign is left to its own devices);
+- The `ToNumber()` method which returns its stringified version, eventually zero-padded to match the minimum length passed as argument (this could be useful to preserve for sure the number of digits to print, as the encryption through the Feistel cipher may result in a smaller number than the original).
+
+_NB: You might want to use the [`NumberToReadable()`](common/utils/base256/readable.go) function when using the ciphered number for decryption._
+
+**IMPORTANT:** Due to the way the Feistel cipher operates, numbers below 256 (ie. only one-byte long) can't preserve the length when using the `EncryptNumber()` method. If length matters, consider using `EncryptString()` instead.
+
+Should you want to use a number with value higher than the accepted max `uint64` value by Golang (`18446744073709551615`) or a floating number, you probably want to use splitting strategies. For example, split it in two numbers that respect the maximum boundaries of a large integer or use both parts (integer and decimal) of the float but not the decimal point itself and rebuild the number afterwards.
 
 
 ### White papers

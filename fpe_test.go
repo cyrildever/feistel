@@ -6,6 +6,7 @@ import (
 	"github.com/cyrildever/feistel"
 	"github.com/cyrildever/feistel/common/utils/base256"
 	"github.com/cyrildever/feistel/common/utils/hash"
+	"github.com/cyrildever/feistel/exception"
 	utls "github.com/cyrildever/go-utls/common/utils"
 	"gotest.tools/assert"
 )
@@ -73,15 +74,62 @@ func TestFPEEncryptDecrypt(t *testing.T) {
 	assert.Equal(t, decrypted, ref)
 }
 
-func TestBase256String(t *testing.T) {
+// TestReadableString ...
+func TestReadableString(t *testing.T) {
 	source := "my-source-data"
 	cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
 
-	obfuscated, err := cipher.Encrypt(source)
+	obfuscated, err := cipher.EncryptString(source)
 	assert.DeepEqual(t, obfuscated.Bytes(), []byte{62, 125, 126, 123, 99, 124, 118, 109, 108, 121, 97, 49, 33, 101})
 	assert.NilError(t, err)
-	str := obfuscated.String(true)
-	assert.Equal(t, str, ">}~{c|vmlya1!e") // Fully readable because, by some chance, the underlying byte slice has all bytes ranging from 33 to 126 (see above)
-	assert.Equal(t, len(source), len(str))
+	strAscii := obfuscated.String(true)
+	assert.Equal(t, strAscii, ">}~{c|vmlya1!e") // Fully readable because, by some chance, the underlying byte slice has all bytes ranging from 33 to 126 (see above)
+	assert.Equal(t, len(source), len(strAscii))
 	assert.DeepEqual(t, len(obfuscated.Bytes()), len(source)) // Always true
+
+	strNotAscii := obfuscated.String()
+	assert.Equal(t, strNotAscii, "`ÃÄÁ§Â¼²±¿¥RB©")
+	assert.Assert(t, len(source) != len(strNotAscii)) // Because of the use of multi-byte encoded characters to make them readable
+	assert.Equal(t, len(source), len([]rune(strNotAscii)))
+
+	deciphered, err := cipher.DecryptString(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deciphered, source)
+}
+
+// TestReadableNumber ...
+func TestReadableNumber(t *testing.T) {
+	source := uint64(123456789)
+	cipher := feistel.NewFPECipher(hash.SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+
+	obfuscated, err := cipher.EncryptNumber(source)
+	assert.NilError(t, err)
+	assert.Equal(t, obfuscated.Uint64(), uint64(22780178))
+	assert.Equal(t, obfuscated.ToNumber(), "22780178")
+	assert.Equal(t, obfuscated.ToNumber(9), "022780178")
+
+	deobfuscated, err := cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, source)
+
+	// Numbers below 256 don't preserve length during encryption
+	source = uint64(123)
+
+	obfuscated, err = cipher.EncryptNumber(source)
+	assert.Error(t, err, "too small to preserve length") // Hence the error
+	_, ok := err.(*exception.TooSmallToPreserveLengthError)
+	assert.Assert(t, ok)
+	assert.Equal(t, obfuscated.Uint64(), uint64(24359))
+	assert.Equal(t, obfuscated.ToNumber(), "24359")
+
+	obfuscated, _ = base256.NumberToReadable(24359)
+	deobfuscated, err = cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, source)
+
+	source = uint64(18446744073709551615) // max accepted uint64 value
+	obfuscated, err = cipher.EncryptNumber(source)
+	assert.NilError(t, err)
+	assert.Equal(t, obfuscated.Uint64(), uint64(17630367666640955566))
+	assert.Equal(t, obfuscated.ToNumber(), "17630367666640955566")
 }
