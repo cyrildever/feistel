@@ -132,4 +132,15 @@ func TestReadableNumber(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, obfuscated.Uint64(), uint64(17630367666640955566))
 	assert.Equal(t, obfuscated.ToNumber(), "17630367666640955566")
+
+	source = uint64(0)
+	obfuscated, err = cipher.EncryptNumber(source)
+	_, ok = err.(*exception.TooSmallToPreserveLengthError)
+	assert.Assert(t, ok)
+	assert.Equal(t, obfuscated.Uint64(), uint64(0))
+
+	obfuscated, _ = base256.NumberToReadable(0)
+	deobfuscated, err = cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, uint64(0))
 }
