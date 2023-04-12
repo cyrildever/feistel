@@ -127,11 +127,22 @@ func TestReadableNumber(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, deobfuscated, source)
 
-	source = uint64(18446744073709551615) // max accepted uint64 value
+	source = uint64(18446744073709551615) // max accepted uint64 value in Go
 	obfuscated, err = cipher.EncryptNumber(source)
 	assert.NilError(t, err)
 	assert.Equal(t, obfuscated.Uint64(), uint64(17630367666640955566))
 	assert.Equal(t, obfuscated.ToNumber(), "17630367666640955566")
+
+	maxJSUnit := uint64(9007199254740991) // JavaScript's unsigned max value
+
+	source = maxJSUnit
+	obfuscated, _ = cipher.EncryptNumber(source)
+	assert.Equal(t, obfuscated.Uint64(), uint64(7873237593534198))
+	assert.Equal(t, obfuscated.ToNumber(), "7873237593534198")
+
+	deobfuscated, err = cipher.DecryptNumber(obfuscated)
+	assert.NilError(t, err)
+	assert.Equal(t, deobfuscated, maxJSUnit)
 
 	source = uint64(0)
 	obfuscated, err = cipher.EncryptNumber(source)
