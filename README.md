@@ -146,7 +146,7 @@ I wrote two white papers to finally make it a fully FPE scheme:
 
 ### License
 
-This module is distributed under an MIT license.
+This module is distributed under a MIT license. \
 See the [LICENSE](LICENSE) file.
 
 
