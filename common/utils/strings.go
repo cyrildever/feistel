@@ -10,11 +10,11 @@ func Add(str1, str2 string) (string, error) {
 	if len(str1) != len(str2) {
 		return "", errors.New("to be added, items must be of the same length")
 	}
-	added := ""
+	var added strings.Builder
 	for i := 0; i < len(str1); i++ {
-		added += string(str1[i] + str2[i])
+		added.WriteRune(rune(str1[i] + str2[i]))
 	}
-	return added, nil
+	return added.String(), nil
 }
 
 // Extract returns an extraction of the passed string of the desired length from the passed start index.
