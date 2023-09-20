@@ -155,3 +155,18 @@ func TestReadableNumber(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, deobfuscated, uint64(0))
 }
+
+func BenchmarkEncrypt(b *testing.B) {
+	cipher := feistel.NewFPECipher(hash.SHA_256, "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692", 10)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := cipher.Encrypt("Edgewhere")
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
