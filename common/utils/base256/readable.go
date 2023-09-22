@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/bits"
+	"strings"
 
 	utls "github.com/cyrildever/go-utls/common/utils"
 )
@@ -103,11 +104,11 @@ func IndexOf(char rune) int {
 
 // ToBase256Readable ...
 func ToBase256Readable(barray []byte) Readable {
-	str := ""
+	var str strings.Builder
 	for _, b := range barray {
-		str += CharAt(int(b))
+		str.WriteRune(rune(CHARSET[b]))
 	}
-	return Readable(str)
+	return Readable(str.String())
 }
 
 // HexToReadable ...
