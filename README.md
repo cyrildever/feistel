@@ -103,7 +103,8 @@ Regarding the equality, keep in mind that this is due to the fact that the `len(
 
 For those interested, I also made two other implementations of these ciphers:
 * In [Typescript](https://github.com/cyrildever/feistel-cipher) for the browser;
-* In [Scala](https://github.com/cyrildever/feistel-jar) for the JVM.
+* In [Scala](https://github.com/cyrildever/feistel-jar) for the JVM;
+* In [Python](https://github.com/cyrildever/feistel-py).
 
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
 
@@ -151,4 +152,4 @@ See the [LICENSE](LICENSE) file.
 
 
 <hr />
-&copy; 2019-2023 Cyril Dever. All rights reserved.
+&copy; 2019-2024 Cyril Dever. All rights reserved.
