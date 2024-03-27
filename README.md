@@ -29,7 +29,7 @@ The algorithmic description (provided by Wikipedia) of the encryption is as foll
   * $R_{i+1}=L_{i}{\oplus}F(L_{i},K_{i})$
 * $m_{0}=L_{0}||R_{0}$ is the unciphered text, $m_{n+1}=L_{n+1}||R_{n+1}$ is the ciphered word. 
 
-There is no restriction on the $F$ function other than the XOR operation must be possible. For simplicity, we will choose ![$L_1$](https://render.githubusercontent.com/render/math?math=L_1) of the same size as $R_1$ and the function $F$ shall transform a word of length $k$ into a word of length $k$ (and this for all $k$).
+There is no restriction on the $F$ function other than the XOR operation must be possible. For simplicity, we will choose $L_1$ of the same size as $R_1$ and the function $F$ shall transform a word of length $k$ into a word of length $k$ (and this for all $k$).
 
 
 ### Usage
