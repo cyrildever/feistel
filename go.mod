@@ -3,7 +3,7 @@ module github.com/cyrildever/feistel
 go 1.23
 
 require (
-	github.com/cyrildever/go-utls v1.10.3
+	github.com/cyrildever/go-utls v1.10.4
 	github.com/ethereum/go-ethereum v1.14.12
 	golang.org/x/crypto v0.31.0
 	gotest.tools v2.2.0+incompatible
@@ -22,7 +22,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.1 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 )
