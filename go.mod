@@ -3,14 +3,14 @@ module github.com/cyrildever/feistel
 go 1.24.0
 
 require (
-	github.com/cyrildever/go-utls v1.10.10
-	github.com/ethereum/go-ethereum v1.16.7
-	golang.org/x/crypto v0.46.0
+	github.com/cyrildever/go-utls v1.10.11
+	github.com/ethereum/go-ethereum v1.16.8
+	golang.org/x/crypto v0.47.0
 	gotest.tools v2.2.0+incompatible
 )
 
 require (
-	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260104020744-7268a54d0358 // indirect
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260112020553-64c30dda3cfd // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.6 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 )
